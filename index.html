@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NightMaa — Indoor Night-Heat Protection for Mothers</title>
+<meta name="description" content="NightMaa estimates tonight's indoor heat in a pregnant woman's home from live weather data and her housing type, and gives a simple, safe plan for the night. A prototype for the MIT Solve 2027 Global Climate Challenge.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F2EC; --card:#FFFDF8; --ink:#2E241B; --ink2:#4A3E33; --muted:#7A6A5B;
+    --line:#E4D7C3; --accent:#B4491F; --accent-deep:#8F3413; --accent-soft:#F7E8DC;
+    --sage:#5F6F52; --sage-soft:#EBEFE3; --amber:#A8740F; --amber-soft:#F7EDD3;
+    --orange:#BC5410; --orange-soft:#F9E7D2; --red:#A92F22; --red-soft:#F9E3DC;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:16px;line-height:1.55}
+  .wrap{max-width:740px;margin:0 auto;padding:22px 16px 60px}
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif;line-height:1.2;margin:0}
+  a{color:var(--accent-deep)}
+  /* Header */
+  header.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:6px 2px 2px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{flex:none;margin-top:4px}
+  .brand h1{font-size:34px;font-weight:700;letter-spacing:.2px}
+  .brand h1 .maa{color:var(--accent)}
+  .tagline{color:var(--ink2);font-size:15.5px;margin:8px 2px 0;max-width:56ch}
+  .langtoggle{display:flex;border:1.5px solid var(--accent);border-radius:999px;overflow:hidden;flex:none;margin-top:6px}
+  .langtoggle button{appearance:none;border:0;background:transparent;color:var(--accent-deep);font:600 14px 'Inter',sans-serif;padding:9px 14px;cursor:pointer;min-height:40px}
+  .langtoggle button.on{background:var(--accent);color:#FFF7EE}
+  /* Cards & sections */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:16px 0;box-shadow:0 1px 2px rgba(46,36,27,.05)}
+  .card h2{font-size:21px;font-weight:600;margin-bottom:4px}
+  .card .sub{color:var(--muted);font-size:14px;margin:0 0 12px}
+  /* Location */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .chip{appearance:none;border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:10px 16px;font:600 14.5px 'Inter',sans-serif;cursor:pointer;min-height:44px}
+  .chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-deep)}
+  .searchrow{display:flex;gap:8px}
+  .searchrow input{flex:1;min-width:0;padding:13px 14px;font-size:16px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font-family:inherit}
+  .searchrow button{appearance:none;border:0;background:var(--accent);color:#FFF7EE;font:600 15px 'Inter',sans-serif;border-radius:12px;padding:0 20px;cursor:pointer;min-height:48px}
+  .results{margin-top:10px;display:none}
+  .results button{display:block;width:100%;text-align:left;appearance:none;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 14px;margin:6px 0;font:500 15px 'Inter',sans-serif;color:var(--ink);cursor:pointer;min-height:48px}
+  .results button small{color:var(--muted)}
+  .place{font-weight:600;color:var(--accent-deep);margin-top:12px;font-size:15px}
+  /* Form */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.grid{grid-template-columns:1fr}}
+  label.flabel{display:block;font-weight:600;font-size:14px;margin-bottom:6px;color:var(--ink2)}
+  select{width:100%;padding:13px 12px;font-size:16px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font-family:inherit;min-height:50px}
+  /* Status */
+  .status{display:none;border-radius:12px;padding:13px 15px;font-size:15px;margin:16px 0}
+  .status.loading{display:block;background:var(--accent-soft);color:var(--accent-deep)}
+  .status.error{display:block;background:var(--red-soft);color:var(--red)}
+  .status button{margin-left:10px;appearance:none;border:1.5px solid currentColor;background:transparent;color:inherit;border-radius:8px;padding:6px 12px;font:600 14px 'Inter',sans-serif;cursor:pointer}
+  /* Risk banner */
+  .risk{border-radius:16px;padding:18px;margin:16px 0;border:1.5px solid}
+  .risk .rk{font:700 12.5px 'Inter',sans-serif;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+  .risk .rv{font-family:'Fraunces',Georgia,serif;font-size:32px;font-weight:700;margin:2px 0 4px}
+  .risk p{margin:6px 0 0;font-size:15px}
+  .risk-low{background:var(--sage-soft);border-color:#B9C4A6;color:#37452C}
+  .risk-mod{background:var(--amber-soft);border-color:#DEC98F;color:#5F4707}
+  .risk-high{background:var(--orange-soft);border-color:#E3B98C;color:#6E3405}
+  .risk-vhigh{background:var(--red-soft);border-color:#DDA293;color:#6E1B10}
+  /* Stats */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+  @media(max-width:560px){.stats{grid-template-columns:1fr 1fr}}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px}
+  .stat .v{font-family:'Fraunces',Georgia,serif;font-size:26px;font-weight:700}
+  .stat .k{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.02em;margin-top:2px}
+  .chartbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 10px 6px;margin:14px 0}
+  .chartbox svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;padding:6px 8px 10px;font-size:13px;color:var(--ink2)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:22px;height:0;border-top:3px solid var(--accent);border-radius:2px;display:inline-block}
+  .swatch.out{border-top:3px dashed #9A8B7A}
+  .swatch.thr{border-top:2px dashed var(--red)}
+  details.how{margin:10px 0 2px}
+  details.how summary{cursor:pointer;font-weight:600;color:var(--accent-deep);font-size:15px;padding:6px 0}
+  details.how p{font-size:14.5px;color:var(--ink2)}
+  /* Outlook */
+  .nights{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:560px){.nights{grid-template-columns:1fr}}
+  .night{border:1px solid var(--line);border-radius:14px;padding:13px 14px;background:#fff}
+  .night .d{font-weight:700;font-size:14.5px}
+  .night .m{font-family:'Fraunces',Georgia,serif;font-size:23px;font-weight:700;margin:3px 0}
+  .night .h{font-size:13px;color:var(--muted)}
+  .pill{display:inline-block;font:700 12px 'Inter',sans-serif;letter-spacing:.05em;padding:4px 10px;border-radius:999px;margin-top:8px;text-transform:uppercase}
+  .pill-low{background:var(--sage-soft);color:#37452C}.pill-mod{background:var(--amber-soft);color:#5F4707}
+  .pill-high{background:var(--orange-soft);color:#6E3405}.pill-vhigh{background:var(--red-soft);color:#6E1B10}
+  /* Advisory */
+  .adv h3{font-size:17px;margin:16px 0 6px;color:var(--accent-deep)}
+  .adv h3:first-child{margin-top:4px}
+  .adv ul{margin:6px 0 0;padding-left:20px}
+  .adv li{margin:5px 0;font-size:15.5px}
+  .intro{font-size:16px;background:var(--accent-soft);border-radius:12px;padding:13px 15px}
+  .danger{background:var(--red-soft);border:1.5px solid #DDA293;border-radius:14px;padding:15px 16px;margin-top:18px}
+  .danger h3{color:var(--red);font-family:'Inter',sans-serif;font-size:16px;margin-bottom:6px}
+  .danger p{margin:0;font-size:15.5px;color:#5C1D13}
+  .disclaimer{font-size:13.5px;color:var(--muted);margin-top:12px}
+  /* Evidence */
+  .ev{margin:0;padding-left:20px}
+  .ev li{margin:10px 0;font-size:15px}
+  .ev .src{display:block;font-size:13px;margin-top:2px}
+  footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;font-size:13.5px;color:var(--muted)}
+  footer p{margin:6px 0}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="brand">
+        <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 14.2A8.8 8.8 0 1 1 9.8 3.4a7.2 7.2 0 1 0 10.8 10.8z" fill="#B4491F"/></svg>
+        <h1>Night<span class="maa">Maa</span></h1>
+      </div>
+      <p class="tagline" data-i18n="tagline">Indoor night-heat protection for mothers-to-be. Every heat warning in India is about the outdoor afternoon — but the dangerous heat is inside the home, at night. NightMaa estimates it, before the night begins.</p>
+    </div>
+    <div class="langtoggle" role="group" aria-label="Language">
+      <button id="langEn" class="on" type="button">English</button>
+      <button id="langHi" type="button">हिंदी</button>
+    </div>
+  </header>
+
+  <!-- Location -->
+  <section class="card">
+    <h2 data-i18n="locTitle">1 · Your place</h2>
+    <p class="sub" data-i18n="locSub">Tap your city, or search for any town. NightMaa uses the live weather forecast for that place.</p>
+    <div class="chips" id="chips"></div>
+    <div class="searchrow">
+      <input id="searchInput" type="text" autocomplete="off" data-i18n-ph="searchPh" placeholder="Search any city or town…">
+      <button id="searchBtn" type="button" data-i18n="searchBtn">Search</button>
+    </div>
+    <div class="results" id="searchResults"></div>
+    <p class="place" id="placeLine"></p>
+  </section>
+
+  <!-- Home profile -->
+  <section class="card">
+    <h2 data-i18n="homeTitle">2 · The home</h2>
+    <p class="sub" data-i18n="homeSub">Four quick questions about the home. Homes hold the day's heat very differently — a tin roof and a cool, airy room are different worlds at midnight.</p>
+    <div class="grid">
+      <div><label class="flabel" for="selRoof" data-i18n="roofL">Roof type</label><select id="selRoof"></select></div>
+      <div><label class="flabel" for="selFloor" data-i18n="floorL">Floor</label><select id="selFloor"></select></div>
+      <div><label class="flabel" for="selVent" data-i18n="ventL">Ventilation</label><select id="selVent"></select></div>
+      <div><label class="flabel" for="selCool" data-i18n="coolL">Cooling available</label><select id="selCool"></select></div>
+    </div>
+  </section>
+
+  <div class="status loading" id="statusBox"><span data-i18n="loading">Loading tonight's forecast…</span></div>
+
+  <!-- Results -->
+  <div id="results" class="hidden">
+    <div class="risk" id="riskBanner">
+      <div class="rk" data-i18n="riskK">Tonight's indoor heat risk in this home</div>
+      <div class="rv" id="riskValue">—</div>
+      <p id="riskLine"></p>
+      <p class="disclaimer" data-i18n="disclaimerShort">⚠ This is heat-risk information to support your decisions — not a medical diagnosis. If you feel unwell, contact your ASHA worker or doctor.</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="v" id="stMin">—</div><div class="k" data-i18n="stMinK">Coolest indoors tonight</div></div>
+      <div class="stat"><div class="v" id="stPeak">—</div><div class="k" data-i18n="stPeakK">Evening peak indoors</div></div>
+      <div class="stat"><div class="v" id="stHours">—</div><div class="k" data-i18n="stHoursK">Hours above 32°C indoors</div></div>
+      <div class="stat"><div class="v" id="stOut">—</div><div class="k" data-i18n="stOutK">Coolest outdoors tonight</div></div>
+    </div>
+    <p class="disclaimer" id="humLine" style="margin-top:-4px"></p>
+
+    <div class="chartbox">
+      <div id="chart"></div>
+      <div class="legend">
+        <span><i class="swatch"></i><span data-i18n="lgIn">Estimated indoors</span></span>
+        <span><i class="swatch out"></i><span data-i18n="lgOut">Outdoors (forecast)</span></span>
+        <span><i class="swatch thr"></i><span data-i18n="lgThr">32°C — danger line from research</span></span>
+      </div>
+    </div>
+
+    <details class="how">
+      <summary data-i18n="howT">How we estimate indoor temperature</summary>
+      <p data-i18n="howB">NightMaa estimates tonight's indoor temperature from the live outdoor forecast (Open-Meteo) plus simple adjustments for the home: a tin or asbestos roof adds about +2.5°C, a concrete slab +1.5°C, tile or thatch +0.5°C; upper floors and poor ventilation add a little more; a cooler or AC subtracts. These adjustments are informed by published Indian housing-heat research, including sensor studies showing that homes stay several degrees hotter than the street at night. This is a transparent estimate, not a sensor measurement — the real temperature in a given home will differ. The risk bands are a guide for action, not a medical diagnosis.</p>
+    </details>
+
+    <section class="card">
+      <h2 data-i18n="outTitle">Next 3 nights</h2>
+      <p class="sub" data-i18n="outSub">The same estimate for the coming nights, so a family — or an ASHA worker planning visits — can see a hot spell coming.</p>
+      <div class="nights" id="nights"></div>
+    </section>
+
+    <section class="card adv">
+      <h2 data-i18n="planTitle">Tonight's plan</h2>
+      <p class="sub" data-i18n="planSub">Simple steps that genuinely cool a room and protect a pregnancy on a hot night.</p>
+      <div id="advice"></div>
+    </section>
+  </div>
+
+  <!-- ASHA -->
+  <section class="card">
+    <h2 data-i18n="ashaTitle">For ASHA workers</h2>
+    <p data-i18n="ashaB" style="font-size:15.5px;margin:8px 0 0">A one-minute check, built for the home visit you already make. Open this page on any phone, tap the mother's village or town, answer four questions about her home — roof, floor, ventilation, cooling — and you will see tonight's indoor heat risk for that home, in Hindi or English, with a simple plan you can explain in a minute. No login, no app to install, no cost. Mothers whose homes show High or Very High risk before a hot night are the ones to visit first the next morning, and to counsel on the danger signs. NightMaa gives heat-risk information to support your judgement — it is not a medical diagnosis.</p>
+  </section>
+
+  <!-- Evidence -->
+  <section class="card">
+    <h2 data-i18n="evTitle">Why this matters — the research</h2>
+    <p class="sub" data-i18n="evSub">NightMaa is built on published evidence, not guesswork.</p>
+    <ul class="ev">
+      <li><b>The heat inside homes at night is extreme — and unmeasured.</b> Sensors placed in 50 low- and middle-income homes in Chennai (Climate Trends study, Oct 2025–Apr 2026) found indoor temperatures frequently above 32°C and rarely below 31°C even at night, peaking around 8–9&nbsp;pm at ~34.7°C as walls give back the day's heat. The worst homes spent 5,700–5,800 hours above 32°C — and the study did not even cover peak summer.
+        <span class="src"><a href="https://www.groundreport.in/extreme-weather/inside-indias-homes-heat-never-leaves-not-even-at-night/" target="_blank" rel="noopener">Ground Report — “Inside India's homes, heat never leaves — not even at night”</a></span></li>
+      <li><b>Heat in pregnancy carries real risk.</b> A <i>Nature Medicine</i> systematic review and meta-analysis of 198 studies across 66 countries found the odds of preterm birth rise by about 4% for every +1°C (OR 1.04), and by 26% during heatwaves (OR 1.26).
+        <span class="src"><a href="https://www.nature.com/articles/s41591-024-03395-8" target="_blank" rel="noopener">Nature Medicine — heat exposure and maternal, foetal and neonatal health outcomes</a></span></li>
+      <li><b>Indian evidence, from Tamil Nadu.</b> In a prospective study of 800 pregnant women doing moderate-to-heavy physical work, those with high heat exposure had 2.4× the adjusted odds of miscarriage and 2.3× the odds of any adverse pregnancy outcome (<i>BJOG</i>, 2024).
+        <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/37814395/" target="_blank" rel="noopener">PubMed — occupational heat exposure and pregnancy outcomes, Tamil Nadu cohort</a></span></li>
+      <li><b>The policy blind spot.</b> India has more than 300 city Heat Action Plans — but none of them mandates monitoring indoor temperature, and indoor nighttime heat is not systematically monitored in any major Indian city. Every official warning still describes the outdoor afternoon, not the bedroom at midnight.
+        <span class="src"><a href="https://www.groundreport.in/extreme-weather/inside-indias-homes-heat-never-leaves-not-even-at-night/" target="_blank" rel="noopener">Climate Trends study coverage — the indoor-monitoring gap</a></span></li>
+    </ul>
+  </section>
+
+  <footer>
+    <p data-i18n="footDisc"><b>Important:</b> NightMaa provides heat-risk information to support decisions by families and frontline health workers. It is not a medical diagnosis, and it does not replace advice from a doctor, nurse or ASHA worker. Indoor temperatures are estimates from outdoor weather and housing type — not sensor readings.</p>
+    <p data-i18n="footProto">Prototype built for the MIT Solve 2027 Global Climate Challenge by Akarsh Pandey (Indore, India). Weather data: Open-Meteo (free, no key). Free to use, no login, works on any phone.</p>
+  </footer>
+</div>
+
+<script>
+'use strict';
+/* ============ i18n ============ */
+var STR = {
+en:{
+  tagline:"Indoor night-heat protection for mothers-to-be. Every heat warning in India is about the outdoor afternoon — but the dangerous heat is inside the home, at night. NightMaa estimates it, before the night begins.",
+  locTitle:"1 · Your place", locSub:"Tap your city, or search for any town. NightMaa uses the live weather forecast for that place.",
+  searchPh:"Search any city or town…", searchBtn:"Search",
+  homeTitle:"2 · The home", homeSub:"Four quick questions about the home. Homes hold the day's heat very differently — a tin roof and a cool, airy room are different worlds at midnight.",
+  roofL:"Roof type", floorL:"Floor", ventL:"Ventilation", coolL:"Cooling available",
+  loading:"Loading tonight's forecast…",
+  errLoad:"Could not load the weather forecast. Please check the internet connection and try again.", retry:"Try again",
+  errSearch:"No place found with that name. Try a different spelling.", errSearchNet:"Search failed — please check the connection and try again.",
+  riskK:"Tonight's indoor heat risk in this home",
+  disclaimerShort:"⚠ This is heat-risk information to support your decisions — not a medical diagnosis. If you feel unwell, contact your ASHA worker or doctor.",
+  stMinK:"Coolest indoors tonight", stPeakK:"Evening peak indoors", stHoursK:"Hours above 32°C indoors", stOutK:"Coolest outdoors tonight",
+  lgIn:"Estimated indoors", lgOut:"Outdoors (forecast)", lgThr:"32°C — danger line from research",
+  howT:"How we estimate indoor temperature",
+  howB:"NightMaa estimates tonight's indoor temperature from the live outdoor forecast (Open-Meteo) plus simple adjustments for the home: a tin or asbestos roof adds about +2.5°C, a concrete slab +1.5°C, tile or thatch +0.5°C; upper floors and poor ventilation add a little more; a cooler or AC subtracts. These adjustments are informed by published Indian housing-heat research, including sensor studies showing that homes stay several degrees hotter than the street at night. This is a transparent estimate, not a sensor measurement — the real temperature in a given home will differ. The risk bands are a guide for action, not a medical diagnosis.",
+  outTitle:"Next 3 nights", outSub:"The same estimate for the coming nights, so a family — or an ASHA worker planning visits — can see a hot spell coming.",
+  planTitle:"Tonight's plan", planSub:"Simple steps that genuinely cool a room and protect a pregnancy on a hot night.",
+  ashaTitle:"For ASHA workers",
+  ashaB:"A one-minute check, built for the home visit you already make. Open this page on any phone, tap the mother's village or town, answer four questions about her home — roof, floor, ventilation, cooling — and you will see tonight's indoor heat risk for that home, in Hindi or English, with a simple plan you can explain in a minute. No login, no app to install, no cost. Mothers whose homes show High or Very High risk before a hot night are the ones to visit first the next morning, and to counsel on the danger signs. NightMaa gives heat-risk information to support your judgement — it is not a medical diagnosis.",
+  evTitle:"Why this matters — the research", evSub:"NightMaa is built on published evidence, not guesswork.",
+  footDisc:"Important: NightMaa provides heat-risk information to support decisions by families and frontline health workers. It is not a medical diagnosis, and it does not replace advice from a doctor, nurse or ASHA worker. Indoor temperatures are estimates from outdoor weather and housing type — not sensor readings.",
+  footProto:"Prototype built for the MIT Solve 2027 Global Climate Challenge by Akarsh Pandey (Indore, India). Weather data: Open-Meteo (free, no key). Free to use, no login, works on any phone.",
+  tonight:"Tonight", minIn:"Coolest indoors", hrsAbove:"hrs above 32°C", humLine:"Tonight's humidity outdoors: {a}–{b}%. High humidity makes heat harder for the body to bear.",
+  placeNow:"Showing tonight for: {p}",
+  riskNames:{low:"Low", mod:"Moderate", high:"High", vhigh:"Very High"},
+  riskLine:"Indoors it may stay as warm as {peak} this evening and only cool to {min} tonight.",
+  intro:{
+    low:"Tonight looks comparatively safe in this home. Still follow the basics below — indoor heat can rise quickly, and pregnancy makes the body work harder in heat.",
+    mod:"Tonight will feel warm indoors. Use the plan below, and pay attention to how you feel through the night.",
+    high:"Tonight's indoor heat is a real risk during pregnancy. Please follow the plan below carefully, and sleep in the coolest room you have.",
+    vhigh:"Tonight's indoor heat is dangerous during pregnancy. Follow the plan below, try to sleep in the coolest place available — even a relative's or neighbour's cooler room if you can — and speak to your ASHA worker today."
+  },
+  advTitles:["Cool the room tonight","Water — keep drinking","Sleep setup","Rest and tomorrow"],
+  adv:[
+    ["After sunset, once the outside air turns cooler than the room, open windows and doors on opposite sides so air can cross the room.",
+     "In the evening, sprinkle water on the roof and floor — as it dries, it carries heat away. This helps most with tin and concrete roofs.",
+     "Hang a damp cotton sheet or cloth in front of the fan, or in the window breeze — evaporation cools the air.",
+     "If you have a cooler, run it in the evening (about 8–10 pm), when indoor heat usually peaks.",
+     "For tomorrow: keep windows and curtains shut through the hot afternoon (12–4 pm) so less heat gets in."],
+    ["Keep a full bottle or a matka of water beside the bed. Drink whenever you wake — do not wait to feel very thirsty.",
+     "Aim for 8–10 glasses of water through the day. If you have sweated a lot, a pinch of salt and sugar in water (like homemade ORS) helps — unless your doctor has restricted your salt or fluids.",
+     "Avoid tea and coffee late in the evening — they make you pass more urine and lose water."],
+    ["Wear loose cotton clothes, and use a light cotton sheet instead of a blanket.",
+     "Sleep low — on the floor or the lowest cot — because cooler air settles near the floor. A cotton mattress or mat feels cooler than foam.",
+     "Wash your hands, feet and face with cool water, or take a quick sponge bath before bed — it helps you fall asleep.",
+     "If the bedroom is the hottest room, sleep in whichever room is coolest tonight — a veranda with a mosquito net can be safer than a hot closed room."],
+    ["Avoid heavy work in the hottest hours tomorrow (12–4 pm); rest in the shade and tell your family tonight if you feel unwell.",
+     "If tonight is very hot, plan tomorrow's rest now — heat strain builds up over several hot nights in a row."]
+  ],
+  dangerT:"⚠ Danger signs — get help immediately",
+  dangerB:"Dizziness or fainting · much less baby movement than usual · severe headache · sudden swelling of the face or hands · vomiting, or not being able to keep water down · fever, contractions, or leaking fluid. → Contact your ASHA worker or doctor immediately, or go to the nearest hospital."
+},
+hi:{
+  tagline:"गर्भवती माताओं के लिए घर के अंदर की रात की गर्मी से सुरक्षा। भारत में गर्मी की हर चेतावनी बाहर की दोपहर के बारे में होती है — लेकिन असली ख़तरनाक गर्मी घर के अंदर, रात में होती है। NightMaa रात शुरू होने से पहले उसका अनुमान लगाता है।",
+  locTitle:"1 · आपकी जगह", locSub:"अपना शहर चुनें, या किसी भी कस्बे को खोजें। NightMaa उस जगह के लाइव मौसम पूर्वानुमान का उपयोग करता है।",
+  searchPh:"कोई भी शहर या कस्बा खोजें…", searchBtn:"खोजें",
+  homeTitle:"2 · घर कैसा है", homeSub:"घर के बारे में चार आसान सवाल। हर घर दिन की गर्मी अलग तरह से रोकता है — टिन की छत और हवादार ठंडा कमरा आधी रात को बिल्कुल अलग होते हैं।",
+  roofL:"छत का प्रकार", floorL:"मंज़िल", ventL:"हवा का आना-जाना", coolL:"ठंडक का साधन",
+  loading:"आज रात का पूर्वानुमान लाया जा रहा है…",
+  errLoad:"मौसम का पूर्वानुमान नहीं मिल पाया। कृपया इंटरनेट कनेक्शन जाँचकर फिर प्रयास करें।", retry:"फिर प्रयास करें",
+  errSearch:"इस नाम की कोई जगह नहीं मिली। कोई और वर्तनी आज़माएँ।", errSearchNet:"खोज विफल — कृपया कनेक्शन जाँचकर फिर प्रयास करें।",
+  riskK:"इस घर में आज रात की अंदर की गर्मी का जोखिम",
+  disclaimerShort:"⚠ यह आपके निर्णय में मदद के लिए गर्मी-जोखिम की जानकारी है — चिकित्सा जाँच नहीं। तबीयत ठीक न लगे तो अपनी आशा कार्यकर्ता या डॉक्टर से संपर्क करें।",
+  stMinK:"आज रात अंदर सबसे ठंडा", stPeakK:"शाम को अंदर सबसे गर्म", stHoursK:"अंदर 32°C से ऊपर के घंटे", stOutK:"आज रात बाहर सबसे ठंडा",
+  lgIn:"अनुमानित अंदर का तापमान", lgOut:"बाहर (पूर्वानुमान)", lgThr:"32°C — शोध से ख़तरे की रेखा",
+  howT:"हम अंदर के तापमान का अनुमान कैसे लगाते हैं",
+  howB:"NightMaa आज रात के घर के अंदर के तापमान का अनुमान लाइव बाहरी पूर्वानुमान (Open-Meteo) और घर के लिए कुछ सरल समायोजनों से लगाता है: टिन या एस्बेस्टस की छत लगभग +2.5°C, कंक्रीट की छत +1.5°C, खपरैल या छप्पर +0.5°C जोड़ती है; ऊपरी मंज़िल और कम हवा का आना-जाना थोड़ा और बढ़ाते हैं; कूलर या AC घटाते हैं। ये समायोजन भारतीय आवास-गर्मी पर प्रकाशित शोध पर आधारित हैं — जिनमें सेंसर अध्ययनों ने दिखाया कि घर रात में सड़क की तुलना में कई डिग्री गर्म रहते हैं। यह एक पारदर्शी अनुमान है, सेंसर की माप नहीं: किसी घर का असली तापमान अलग हो सकता है। जोखिम श्रेणियाँ कार्रवाई के लिए मार्गदर्शन हैं, चिकित्सा जाँच नहीं।",
+  outTitle:"अगली 3 रातें", outSub:"आने वाली रातों के लिए वही अनुमान, ताकि परिवार — या भ्रमण की योजना बनाती आशा कार्यकर्ता — गर्मी का दौर पहले से देख सके।",
+  planTitle:"आज रात की योजना", planSub:"आसान कदम जो सचमुच कमरे को ठंडा करते हैं और गर्म रात में गर्भावस्था की रक्षा करते हैं।",
+  ashaTitle:"आशा कार्यकर्ताओं के लिए",
+  ashaB:"आपके गृह-भ्रमण के लिए बना एक-मिनट का परीक्षण। NightMaa उसी भ्रमण में चलने के लिए बनाया गया है जो आप पहले से करती हैं: किसी भी फोन पर यह पेज खोलें, माँ के गाँव या शहर को चुनें, उसके घर के बारे में चार सवालों के जवाब दें — छत, मंज़िल, हवा का आना-जाना, ठंडक का साधन — और आपको आज रात के लिए उस घर की गर्मी का जोखिम हिंदी या अंग्रेज़ी में मिल जाएगा, एक आसान योजना के साथ जिसे आप एक मिनट में समझा सकती हैं। न लॉगिन, न ऐप लगाना, न कोई खर्च। जिन माताओं के घर गर्म रात से पहले 'उच्च' या 'बहुत उच्च' जोखिम दिखाएँ, उन्हें अगली सुबह सबसे पहले देखें और ख़तरे के संकेतों पर सलाह दें। NightMaa आपके निर्णय में मदद के लिए गर्मी-जोखिम की जानकारी देता है — यह चिकित्सा जाँच नहीं है।",
+  evTitle:"यह क्यों ज़रूरी है — शोध", evSub:"NightMaa प्रकाशित सबूतों पर बना है, अटकलों पर नहीं।",
+  footDisc:"महत्वपूर्ण: NightMaa परिवारों और अग्रिम पंक्ति के स्वास्थ्य कार्यकर्ताओं के निर्णय में मदद के लिए गर्मी-जोखिम की जानकारी देता है। यह चिकित्सा जाँच नहीं है, और डॉक्टर, नर्स या आशा कार्यकर्ता की सलाह का विकल्प नहीं है। अंदर के तापमान बाहरी मौसम और घर के प्रकार से लगाए गए अनुमान हैं — सेंसर की माप नहीं।",
+  footProto:"MIT Solve 2027 Global Climate Challenge के लिए अकार्श पांडेय (इंदौर, भारत) द्वारा बनाया गया प्रोटोटाइप। मौसम डेटा: Open-Meteo (मुफ़्त, बिना कुंजी)। उपयोग मुफ़्त, कोई लॉगिन नहीं, किसी भी फोन पर चलता है।",
+  tonight:"आज रात", minIn:"अंदर सबसे ठंडा", hrsAbove:"घंटे 32°C से ऊपर", humLine:"आज रात बाहर की नमी: {a}–{b}%। ज़्यादा नमी में गर्मी शरीर पर और भारी पड़ती है।",
+  placeNow:"आज रात का अनुमान: {p}",
+  riskNames:{low:"कम", mod:"मध्यम", high:"उच्च", vhigh:"बहुत उच्च"},
+  riskLine:"आज शाम अंदर का तापमान {peak} तक रह सकता है और रात में केवल {min} तक ही ठंडा होगा।",
+  intro:{
+    low:"आज रात इस घर में अपेक्षाकृत सुरक्षा लगती है। फिर भी नीचे दिए बुनियादी सुझाव अपनाएँ — घर के अंदर की गर्मी तेज़ी से बढ़ सकती है, और गर्भावस्था में शरीर पर गर्मी का बोझ ज़्यादा पड़ता है।",
+    mod:"आज रात घर के अंदर गर्मी महसूस होगी। नीचे दी योजना अपनाएँ, और रात भर अपने शरीर के संकेतों पर ध्यान दें।",
+    high:"आज रात की अंदर की गर्मी गर्भावस्था में सचमुच जोखिम भरी है। कृपया नीचे की योजना ध्यान से अपनाएँ और सबसे ठंडे कमरे में सोएँ।",
+    vhigh:"आज रात की अंदर की गर्मी गर्भावस्था में ख़तरनाक है। नीचे की योजना अपनाएँ, हो सके तो सबसे ठंडी जगह सोएँ — ज़रूरत पड़े तो किसी रिश्तेदार या पड़ोसी के ठंडे कमरे में — और आज ही अपनी आशा कार्यकर्ता से बात करें।"
+  },
+  advTitles:["आज रात कमरा ठंडा रखें","पानी — पीते रहें","सोने की तैयारी","आराम और कल का दिन"],
+  adv:[
+    ["सूरज ढलने के बाद, जब बाहर की हवा कमरे से ठंडी हो जाए, तो आमने-सामने की खिड़कियाँ और दरवाज़े खोल दें ताकि हवा आर-पार बहे।",
+     "शाम को छत और फर्श पर पानी छिड़कें — सूखते समय पानी गर्मी को साथ ले जाता है। यह टिन और कंक्रीट की छतों पर सबसे ज़्यादा काम करता है।",
+     "पंखे के सामने या खिड़की की हवा में गीली सूती चादर या भीगा कपड़ा टाँगें — भाप बनने से हवा ठंडी होती है।",
+     "कूलर हो तो शाम को (लगभग 8–10 बजे) ज़रूर चलाएँ, जब अंदर की गर्मी आमतौर पर सबसे ज़्यादा होती है।",
+     "कल के लिए: तेज़ दोपहर (12–4 बजे) खिड़कियाँ और परदे बंद रखें ताकि कम गर्मी अंदर आए।"],
+    ["बिस्तर के पास पानी की भरी बोतल या मटका रखें। रात में जब भी आँख खुले, पानी पिएँ — तेज़ प्यास लगने का इंतज़ार न करें।",
+     "दिन भर में 8–10 गिलास पानी पिएँ। बहुत पसीना आया हो तो पानी में एक चुटकी नमक और चीनी (घर के ORS जैसा) मदद करता है — जब तक डॉक्टर ने नमक या पानी पर रोक न लगाई हो।",
+     "शाम को देर से चाय-कॉफ़ी न लें — इनसे पेशाब ज़्यादा आता है और शरीर का पानी घटता है।"],
+    ["ढीले सूती कपड़े पहनें, और कंबल की जगह हल्की सूती चादर लें।",
+     "नीचे सोएँ — फर्श पर या सबसे नीचे की खाट पर — क्योंकि ठंडी हवा फर्श के पास रहती है। फोम के बजाय सूती गद्दा या चटाई ठंडी लगती है।",
+     "सोने से पहले ठंडे पानी से हाथ-पैर और मुँह धोएँ, या स्पंज करें — इससे नींद जल्दी आती है।",
+     "अगर शयनकक्ष सबसे गर्म कमरा है, तो आज रात सबसे ठंडे कमरे में सोएँ — मच्छरदानी के साथ बरामदा भी गर्म बंद कमरे से सुरक्षित हो सकता है।"],
+    ["कल तेज़ गर्मी के घंटों (12–4 बजे) में भारी काम न करें; छाँव में आराम करें, और तबीयत ठीक न लगे तो आज रात ही परिवार को बता दें।",
+     "अगर आज रात बहुत गर्म है, तो कल के आराम की योजना अभी बनाएँ — लगातार कई गर्म रातों में गर्मी का बोझ बढ़ता जाता है।"]
+  ],
+  dangerT:"⚠ ख़तरे के संकेत — तुरंत मदद लें",
+  dangerB:"चक्कर आना या बेहोश होना · बच्चे की हलचल सामान्य से बहुत कम होना · तेज़ सिरदर्द · चेहरे या हाथों पर अचानक सूजन · उल्टी, या पानी भी न रुकना · बुखार, दर्द (संकुचन) या पानी का रिसाव। → तुरंत अपनी आशा कार्यकर्ता या डॉक्टर से संपर्क करें, या नज़दीकी अस्पताल जाएँ।"
+}};
+
+/* ============ Select options ============ */
+var SELECT_DEFS = {
+  roof:{off:{tin:2.5, concrete:1.5, tile:0.5}, en:[["tin","Tin / asbestos sheet roof"],["concrete","Concrete slab roof (RCC)"],["tile","Tile / thatch roof"]], hi:[["tin","टिन / एस्बेस्टस की छत"],["concrete","कंक्रीट की छत (RCC)"],["tile","खपरैल / छप्पर की छत"]]},
+  floor:{off:{ground:0, first:0.4, second:0.8}, en:[["ground","Ground floor"],["first","First floor"],["second","Second floor or above"]], hi:[["ground","भूतल (ग्राउंड फ्लोर)"],["first","पहली मंज़िल"],["second","दूसरी मंज़िल या ऊपर"]]},
+  vent:{off:{poor:0.7, moderate:0, good:-0.5}, en:[["poor","Poor — few or small windows"],["moderate","Moderate"],["good","Good — cross-ventilation"]], hi:[["poor","कम — छोटी या कम खिड़कियाँ"],["moderate","मध्यम"],["good","अच्छी — आर-पार हवा"]]},
+  cool:{off:{none:0, fan:-0.3, cooler:-2, ac:-4}, en:[["none","No fan or cooler"],["fan","Fan only"],["cooler","Cooler / evaporative"],["ac","Air conditioner"]], hi:[["none","न पंखा, न कूलर"],["fan","केवल पंखा"],["cooler","कूलर"],["ac","एयर कंडीशनर (AC)"]]}
+};
+var DEFAULTS = {roof:"concrete", floor:"ground", vent:"moderate", cool:"fan"};
+
+var PRESETS = [
+  {name:"Indore", admin:"Madhya Pradesh", lat:22.7196, lon:75.8577},
+  {name:"Chennai", admin:"Tamil Nadu", lat:13.0827, lon:80.2707},
+  {name:"Delhi", admin:"Delhi", lat:28.6139, lon:77.2090},
+  {name:"Ahmedabad", admin:"Gujarat", lat:23.0225, lon:72.5714},
+  {name:"Nagpur", admin:"Maharashtra", lat:21.1458, lon:79.0882},
+  {name:"Patna", admin:"Bihar", lat:25.5941, lon:85.1376}
+];
+
+/* ============ State ============ */
+var lang = "en";
+var place = PRESETS[0];
+var wx = null; /* forecast response */
+var hourIdx = {}; /* "YYYY-MM-DDTHH" -> index */
+
+function $(id){ return document.getElementById(id); }
+function S(k){ return STR[lang][k]; }
+function pad(n){ return (n<10?"0":"")+n; }
+function fmtT(v){ return (Math.round(v*10)/10).toFixed(1)+"°C"; }
+function hourLabel(h){ var hh=h%12; if(hh===0) hh=12; return hh+(h<12||h===24?" AM":" PM"); }
+function hourLabelShort(h){ var hh=h%12; if(hh===0) hh=12; return hh+(h<12?"a":"p"); }
+
+/* ============ Profile / model ============ */
+function profile(){
+  return { roof:$("selRoof").value, floor:$("selFloor").value, vent:$("selVent").value, cool:$("selCool").value };
+}
+function totalOffset(p){
+  return SELECT_DEFS.roof.off[p.roof] + SELECT_DEFS.floor.off[p.floor] + SELECT_DEFS.vent.off[p.vent] + SELECT_DEFS.cool.off[p.cool];
+}
+function estimateIndoor(outdoor, p){
+  var off = totalOffset(p);
+  var est = outdoor + off;
+  var floorLimit = outdoor - 5;
+  if (est < floorLimit) est = floorLimit;
+  return est;
+}
+
+/* ============ Nights ============ */
+function dateParts(dateStr){ var a=dateStr.split("-"); return {y:+a[0], m:+a[1], d:+a[2]}; }
+function addDays(dateStr, n){
+  var p = dateParts(dateStr);
+  var dt = new Date(Date.UTC(p.y, p.m-1, p.d) + n*86400000);
+  return dt.getUTCFullYear()+"-"+pad(dt.getUTCMonth()+1)+"-"+pad(dt.getUTCDate());
+}
+function weekdayName(dateStr){
+  var p = dateParts(dateStr);
+  var dt = new Date(Date.UTC(p.y, p.m-1, p.d));
+  var en=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  var hi=["रविवार","सोमवार","मंगलवार","बुधवार","गुरुवार","शुक्रवार","शनिवार"];
+  return (lang==="hi"?hi:en)[dt.getUTCDay()];
+}
+function dateLabel(dateStr){
+  var p = dateParts(dateStr);
+  var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return weekdayName(dateStr)+" "+p.d+" "+months[p.m-1];
+}
+function tonightDateStr(){
+  var off = wx.utc_offset_seconds || 0;
+  var nl = new Date(Date.now() + off*1000);
+  var ds = nl.getUTCFullYear()+"-"+pad(nl.getUTCMonth()+1)+"-"+pad(nl.getUTCDate());
+  if (nl.getUTCHours() < 7) ds = addDays(ds, -1);
+  return ds;
+}
+function nightIndices(dateStr){
+  var start = hourIdx[dateStr+"T18"];
+  var pts = [];
+  if (start === undefined){
+    /* Early morning before 07:00 on the first forecast day: night began yesterday,
+       evening hours are outside the forecast window — use what we have (00:00–07:00). */
+    start = hourIdx[addDays(dateStr,1)+"T00"];
+    if (start === undefined) return pts;
+  }
+  var sh = parseInt(wx.hourly.time[start].slice(11,13), 10);
+  for (var k=0; k<18; k++){
+    var i = start + k;
+    if (i >= wx.hourly.time.length) break;
+    var hr = parseInt(wx.hourly.time[i].slice(11,13), 10);
+    if (hr !== (sh+k)%24) break;
+    if (k>0 && hr===8) break;
+    pts.push(i);
+  }
+  return pts;
+}
+function nightStats(pts, p){
+  var out=[], inn=[];
+  for (var j=0;j<pts.length;j++){
+    var o = wx.hourly.temperature_2m[pts[j]];
+    out.push(o); inn.push(estimateIndoor(o, p));
+  }
+  var minIn = Math.min.apply(null, inn), maxIn = Math.max.apply(null, inn), minOut = Math.min.apply(null, out);
+  var above = 0, peakAt = 0, humMin = 1e9, humMax = -1e9;
+  for (var q=0;q<inn.length;q++){
+    if (inn[q] > 32) above++;
+    if (inn[q] === maxIn) peakAt = q;
+    var h = wx.hourly.relative_humidity_2m[pts[q]];
+    if (h<humMin) humMin=h; if (h>humMax) humMax=h;
+  }
+  return {pts:pts, out:out, inn:inn, minIn:minIn, maxIn:maxIn, minOut:minOut, above:above,
+          peakHour:parseInt(wx.hourly.time[pts[peakAt]].slice(11,13),10), humMin:humMin, humMax:humMax};
+}
+function riskOf(st){
+  if (st.minIn > 32 || st.above >= 4) return "vhigh";
+  if (st.minIn >= 30) return "high";
+  if (st.minIn >= 28) return "mod";
+  return "low";
+}
+
+/* ============ Chart (inline SVG) ============ */
+function buildChart(st){
+  var W=680, H=250, L=38, R=10, T=14, B=26, iw=W-L-R, ih=H-T-B;
+  var all = st.out.concat(st.inn);
+  var lo = Math.floor(Math.min.apply(null, all) - 1), hi = Math.max(Math.ceil(Math.max.apply(null, all) + 1), 33);
+  if (33 > hi) hi = 33;
+  function X(i){ return L + (st.pts.length===1 ? iw/2 : iw * i/(st.pts.length-1)); }
+  function Y(v){ return T + ih * (hi - v)/(hi - lo); }
+  var s = "";
+  /* gridlines every 2 degrees */
+  for (var g = Math.ceil(lo/2)*2; g <= hi; g += 2){
+    s += '<line x1="'+L+'" y1="'+Y(g)+'" x2="'+(W-R)+'" y2="'+Y(g)+'" stroke="#EDE3D2" stroke-width="1"/>';
+    s += '<text x="'+(L-6)+'" y="'+(Y(g)+4)+'" font-size="11" fill="#7A6A5B" text-anchor="end">'+g+'°</text>';
+  }
+  /* 32°C danger line */
+  if (32 >= lo && 32 <= hi){
+    s += '<line x1="'+L+'" y1="'+Y(32)+'" x2="'+(W-R)+'" y2="'+Y(32)+'" stroke="#A92F22" stroke-width="1.6" stroke-dasharray="6 4"/>';
+    s += '<text x="'+(W-R)+'" y="'+(Y(32)-5)+'" font-size="11" fill="#A92F22" text-anchor="end" font-weight="600">32°C</text>';
+  }
+  function line(vals, color, width, dash){
+    var ptsStr = "";
+    for (var i=0;i<vals.length;i++) ptsStr += X(i).toFixed(1)+","+Y(vals[i]).toFixed(1)+" ";
+    return '<polyline points="'+ptsStr+'" fill="none" stroke="'+color+'" stroke-width="'+width+'" '+(dash?'stroke-dasharray="5 4" ':'')+'stroke-linejoin="round" stroke-linecap="round"/>';
+  }
+  s += line(st.out, "#9A8B7A", 2, true);
+  s += line(st.inn, "#B4491F", 2.8, false);
+  for (var i2=0;i2<st.inn.length;i2++){
+    s += '<circle cx="'+X(i2)+'" cy="'+Y(st.inn[i2])+'" r="3" fill="#B4491F"/>';
+  }
+  for (var i3=0;i3<st.pts.length;i3++){
+    if (i3%2===0 || i3===st.pts.length-1){
+      var hr = parseInt(wx.hourly.time[st.pts[i3]].slice(11,13),10);
+      s += '<text x="'+X(i3)+'" y="'+(H-8)+'" font-size="11" fill="#7A6A5B" text-anchor="middle">'+hourLabelShort(hr)+'</text>';
+    }
+  }
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Tonight: estimated indoor vs outdoor temperature, hour by hour">'+s+'</svg>';
+}
+
+/* ============ Rendering ============ */
+function buildSelects(){
+  var defs = ["roof","floor","vent","cool"];
+  var ids = {roof:"selRoof", floor:"selFloor", vent:"selVent", cool:"selCool"};
+  defs.forEach(function(key){
+    var sel = $(ids[key]);
+    var cur = sel.value || DEFAULTS[key];
+    sel.innerHTML = "";
+    SELECT_DEFS[key][lang].forEach(function(pair){
+      var o = document.createElement("option");
+      o.value = pair[0]; o.textContent = pair[1];
+      sel.appendChild(o);
+    });
+    sel.value = cur;
+  });
+}
+function buildChips(){
+  var box = $("chips"); box.innerHTML = "";
+  PRESETS.forEach(function(c){
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "chip" + (place && place.name===c.name && place.lat===c.lat ? " on" : "");
+    b.textContent = c.name;
+    b.addEventListener("click", function(){ selectPlace(c); });
+    box.appendChild(b);
+  });
+}
+function render(){
+  if (!wx) return;
+  var p = profile();
+  var tDate = tonightDateStr();
+  var st = nightStats(nightIndices(tDate), p);
+  if (!st.pts.length){ showError(); return; }
+  var risk = riskOf(st);
+  $("results").classList.remove("hidden");
+  /* risk banner */
+  var banner = $("riskBanner");
+  banner.className = "risk risk-" + risk;
+  $("riskValue").textContent = S("riskNames")[risk];
+  $("riskLine").textContent = S("riskLine").replace("{peak}", fmtT(st.maxIn)).replace("{min}", fmtT(st.minIn));
+  /* stats */
+  $("stMin").textContent = fmtT(st.minIn);
+  $("stPeak").textContent = fmtT(st.maxIn);
+  $("stHours").textContent = st.above + "";
+  $("stOut").textContent = fmtT(st.minOut);
+  $("humLine").textContent = S("humLine").replace("{a}", Math.round(st.humMin)).replace("{b}", Math.round(st.humMax));
+  /* chart */
+  $("chart").innerHTML = buildChart(st);
+  /* outlook */
+  var nightsHtml = "";
+  for (var n=0; n<3; n++){
+    var ds = addDays(tDate, n);
+    var npts = nightIndices(ds);
+    if (!npts.length) continue;
+    var nst = nightStats(npts, p);
+    var nr = riskOf(nst);
+    nightsHtml += '<div class="night"><div class="d">'+(n===0 ? S("tonight")+" · " : "")+dateLabel(ds)+'</div>'+
+      '<div class="m">'+fmtT(nst.minIn)+'</div>'+
+      '<div class="h">'+S("minIn")+' · '+nst.above+' '+S("hrsAbove")+'</div>'+
+      '<span class="pill pill-'+nr+'">'+S("riskNames")[nr]+'</span></div>';
+  }
+  $("nights").innerHTML = nightsHtml;
+  /* advice */
+  var adv = '<p class="intro">'+S("intro")[risk]+'</p>';
+  for (var t=0; t<STR[lang].advTitles.length; t++){
+    adv += '<h3>'+STR[lang].advTitles[t]+'</h3><ul>';
+    STR[lang].adv[t].forEach(function(li){ adv += '<li>'+li+'</li>'; });
+    adv += '</ul>';
+  }
+  adv += '<div class="danger"><h3>'+S("dangerT")+'</h3><p>'+S("dangerB")+'</p></div>';
+  adv += '<p class="disclaimer">'+S("disclaimerShort")+'</p>';
+  $("advice").innerHTML = adv;
+  $("placeLine").textContent = S("placeNow").replace("{p}", place.name + (place.admin ? ", "+place.admin : ""));
+}
+
+/* ============ Data loading ============ */
+function showLoading(){
+  var b = $("statusBox");
+  b.className = "status loading"; b.style.display = "block";
+  b.innerHTML = "<span>"+S("loading")+"</span>";
+}
+function showError(){
+  var b = $("statusBox");
+  b.className = "status error"; b.style.display = "block";
+  b.innerHTML = S("errLoad") + ' <button type="button" id="retryBtn">'+S("retry")+'</button>';
+  $("retryBtn").addEventListener("click", function(){ loadForecast(); });
+}
+function hideStatus(){ var b=$("statusBox"); b.style.display="none"; b.className="status"; }
+
+function loadForecast(){
+  showLoading();
+  var url = "https://api.open-meteo.com/v1/forecast?latitude="+place.lat+"&longitude="+place.lon+
+            "&hourly=temperature_2m,relative_humidity_2m,apparent_temperature&forecast_days=7&timezone=auto";
+  fetch(url).then(function(r){
+    if (!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(data){
+    wx = data;
+    hourIdx = {};
+    data.hourly.time.forEach(function(t, i){ hourIdx[t.slice(0,13)] = i; });
+    hideStatus();
+    render();
+  }).catch(function(){ showError(); });
+}
+function selectPlace(c){
+  place = c;
+  buildChips();
+  $("searchResults").style.display = "none";
+  loadForecast();
+}
+
+/* ============ Search ============ */
+function doSearch(){
+  var q = $("searchInput").value.trim();
+  var box = $("searchResults");
+  if (!q){ box.style.display="none"; return; }
+  var url = "https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(q)+"&count=5&language=en&format=json";
+  fetch(url).then(function(r){ return r.json(); }).then(function(data){
+    box.innerHTML = "";
+    var res = data.results || [];
+    if (!res.length){
+      box.innerHTML = '<p class="sub" style="padding:6px 2px">'+S("errSearch")+'</p>';
+      box.style.display = "block"; return;
+    }
+    res.forEach(function(r){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.innerHTML = "";
+      b.textContent = r.name;
+      var small = document.createElement("small");
+      small.textContent = " — " + [r.admin1, r.country].filter(Boolean).join(", ");
+      b.appendChild(small);
+      b.addEventListener("click", function(){
+        selectPlace({name:r.name, admin:r.admin1||"", lat:r.latitude, lon:r.longitude});
+      });
+      box.appendChild(b);
+    });
+    box.style.display = "block";
+  }).catch(function(){
+    box.innerHTML = '<p class="sub" style="padding:6px 2px">'+S("errSearchNet")+'</p>';
+    box.style.display = "block";
+  });
+}
+
+/* ============ Language ============ */
+function applyLang(){
+  document.querySelectorAll("[data-i18n]").forEach(function(el){
+    var k = el.getAttribute("data-i18n");
+    if (STR[lang][k]) el.textContent = STR[lang][k];
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(function(el){
+    var k = el.getAttribute("data-i18n-ph");
+    if (STR[lang][k]) el.setAttribute("placeholder", STR[lang][k]);
+  });
+  document.documentElement.lang = (lang==="hi" ? "hi" : "en");
+  $("langEn").classList.toggle("on", lang==="en");
+  $("langHi").classList.toggle("on", lang==="hi");
+  buildSelects();
+  if (wx) render();
+}
+
+/* ============ Init ============ */
+buildChips();
+buildSelects();
+$("searchBtn").addEventListener("click", doSearch);
+$("searchInput").addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); doSearch(); } });
+["selRoof","selFloor","selVent","selCool"].forEach(function(id){
+  $(id).addEventListener("change", function(){ if (wx) render(); });
+});
+$("langEn").addEventListener("click", function(){ lang="en"; applyLang(); });
+$("langHi").addEventListener("click", function(){ lang="hi"; applyLang(); });
+loadForecast();
+</script>
+</body>
+</html>
