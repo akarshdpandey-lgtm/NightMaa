@@ -108,10 +108,28 @@
   footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;font-size:13.5px;color:var(--muted)}
   footer p{margin:6px 0}
   .hidden{display:none !important}
+  /* v2: controls, mode/replay, share, validation */
+  .controls{display:flex;gap:8px;align-items:center;flex:none;margin-top:6px}
+  .unitbtn{appearance:none;border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--accent-deep);border-radius:999px;font:700 13.5px 'Inter',sans-serif;padding:9px 13px;cursor:pointer;min-height:40px}
+  select.langsel{width:auto;min-height:40px;padding:8px 10px;font-size:14px;font-weight:600;border-color:var(--accent);color:var(--accent-deep)}
+  .geobtn{appearance:none;border:1.5px solid var(--accent);background:#fff;color:var(--accent-deep);border-radius:12px;padding:11px 16px;font:600 14.5px 'Inter',sans-serif;cursor:pointer;min-height:46px;margin-top:12px}
+  .modetoggle{display:flex;gap:8px;flex-wrap:wrap}
+  .replaybox{margin-top:14px;border-top:1px dashed var(--line);padding-top:14px}
+  .rpresets{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
+  input[type="date"]{width:100%;padding:12px;font-size:16px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font-family:inherit;min-height:50px}
+  .sharebtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .sharebtn{appearance:none;border:0;background:var(--accent);color:#FFF7EE;font:600 15px 'Inter',sans-serif;border-radius:12px;padding:13px 18px;cursor:pointer;min-height:48px}
+  .sharebtn.alt{background:var(--sage)}
+  table.valtab{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:10px}
+  table.valtab th,table.valtab td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+  table.valtab th{background:var(--accent-soft);color:var(--accent-deep);font-size:13.5px}
+  [dir="rtl"] .ev,[dir="rtl"] .adv ul{padding-left:0;padding-right:20px}
+  [dir="rtl"] .results button{text-align:right}
+  [dir="rtl"] .stat .k,[dir="rtl"] .night .h{text-align:right}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="appWrap">
 
   <header class="top">
     <div>
@@ -121,9 +139,18 @@
       </div>
       <p class="tagline" data-i18n="tagline">Indoor night-heat protection for mothers-to-be. Every heat warning in India is about the outdoor afternoon — but the dangerous heat is inside the home, at night. NightMaa estimates it, before the night begins.</p>
     </div>
-    <div class="langtoggle" role="group" aria-label="Language">
-      <button id="langEn" class="on" type="button">English</button>
-      <button id="langHi" type="button">हिंदी</button>
+    <div class="controls">
+      <button id="unitBtn" class="unitbtn" type="button" aria-label="Temperature unit">°C</button>
+      <select id="langSel" class="langsel" aria-label="Language">
+        <option value="en">English</option>
+        <option value="hi">हिन्दी</option>
+        <option value="bn">বাংলা</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="pt">Português</option>
+        <option value="ur">اردو</option>
+        <option value="ar">العربية</option>
+      </select>
     </div>
   </header>
 
@@ -138,6 +165,7 @@
     </div>
     <div class="results" id="searchResults"></div>
     <p class="place" id="placeLine"></p>
+    <button class="geobtn" id="geoBtn" type="button" data-i18n="geoBtn">📍 Use my location</button>
   </section>
 
   <!-- Home profile -->
@@ -149,6 +177,23 @@
       <div><label class="flabel" for="selFloor" data-i18n="floorL">Floor</label><select id="selFloor"></select></div>
       <div><label class="flabel" for="selVent" data-i18n="ventL">Ventilation</label><select id="selVent"></select></div>
       <div><label class="flabel" for="selCool" data-i18n="coolL">Cooling available</label><select id="selCool"></select></div>
+    </div>
+  </section>
+
+  <!-- Mode: live tonight, or replay a recorded hot night -->
+  <section class="card">
+    <h2 data-i18n="modeTitle">3 · Live tonight — or replay a hot night</h2>
+    <p class="sub" data-i18n="modeSub">In the cool season, tonight may look safe everywhere. Replay mode runs the same estimate on a real recorded hot night, so you can see what this home would face in a heatwave.</p>
+    <div class="modetoggle" role="group" aria-label="Mode">
+      <button id="modeLive" class="chip on" type="button" data-i18n="modeLive">Tonight (live)</button>
+      <button id="modeReplay" class="chip" type="button" data-i18n="modeReplay">Replay a hot night</button>
+    </div>
+    <div class="replaybox hidden" id="replayBox">
+      <p class="sub" data-i18n="replaySub">Verified hot nights — tap one, or pick any past date for the place selected above.</p>
+      <div class="rpresets" id="replayPresets"></div>
+      <label class="flabel" for="replayDate" data-i18n="replayDateL">Or pick any past date</label>
+      <input type="date" id="replayDate">
+      <p class="disclaimer" data-i18n="replayNote">Replay of a real recorded night — ERA5 data via Open-Meteo Archive.</p>
     </div>
   </section>
 
@@ -195,6 +240,14 @@
       <h2 data-i18n="planTitle">Tonight's plan</h2>
       <p class="sub" data-i18n="planSub">Simple steps that genuinely cool a room and protect a pregnancy on a hot night.</p>
       <div id="advice"></div>
+    <section class="card">
+      <h2 data-i18n="shareTitle">Share tonight's plan</h2>
+      <p class="sub" data-i18n="shareSub">Send this night's summary to the mother or her family — for example, an ASHA worker forwarding the plan on WhatsApp.</p>
+      <div class="sharebtns">
+        <button id="shareCopy" class="sharebtn" type="button" data-i18n="shareCopy">Copy the plan</button>
+        <button id="shareWa" class="sharebtn alt" type="button" data-i18n="shareWa">Share on WhatsApp</button>
+      </div>
+      <p class="disclaimer hidden" id="shareMsg"></p>
     </section>
   </div>
 
@@ -220,6 +273,20 @@
     </ul>
   </section>
 
+  <!-- Validation -->
+  <section class="card">
+    <h2 data-i18n="valTitle">Checked against published measurements</h2>
+    <p class="sub" data-i18n="valSub">How NightMaa's estimate compares with what sensors actually measured in Chennai homes.</p>
+    <table class="valtab">
+      <tr><th></th><th data-i18n="valColStudy">Measured by sensors — Chennai study (50 homes)</th><th data-i18n="valColEst">NightMaa estimate — same kind of home</th></tr>
+      <tr><td data-i18n="valR1k">Coolest point of the night, indoors</td><td data-i18n="valR1s">Rarely below 31°C</td><td data-i18n="valR1n">≈34.6°C — the home never leaves the danger zone</td></tr>
+      <tr><td data-i18n="valR2k">Evening peak, indoors</td><td data-i18n="valR2s">≈34.7°C around 8–9 pm</td><td data-i18n="valR2n">≈36.8°C at 8 pm</td></tr>
+      <tr><td data-i18n="valR3k">Time above 32°C indoors</td><td data-i18n="valR3s">Frequently above 32°C; worst homes 5,700–5,800 hours above 32°C</td><td data-i18n="valR3n">All 14 hours of the night window above 32°C</td></tr>
+    </table>
+    <p data-i18n="valNote" style="font-size:14.5px">Read this honestly: the study placed sensors inside real homes (Oct 2025–Apr 2026, not peak summer). The NightMaa column is an estimate from outdoor weather for one recorded peak-summer night (Chennai, 20 May 2026, tin roof + poor ventilation), when the outdoors itself never fell below 31.4°C — a hotter night than the study period, so the estimate runs hotter too. What agrees is the pattern that matters: this kind of home does not cool below the danger zone at night and spends the whole night above 32°C. Exact degrees will differ home by home — which is why our next step is validation with low-cost ESP32 temperature loggers inside real homes.</p>
+    <button id="valReplayBtn" class="sharebtn" type="button" data-i18n="valBtn">Replay this night — Chennai, tin roof, poor ventilation</button>
+  </section>
+
   <footer>
     <p data-i18n="footDisc"><b>Important:</b> NightMaa provides heat-risk information to support decisions by families and frontline health workers. It is not a medical diagnosis, and it does not replace advice from a doctor, nurse or ASHA worker. Indoor temperatures are estimates from outdoor weather and housing type — not sensor readings.</p>
     <p data-i18n="footProto">Prototype built for the MIT Solve 2027 Global Climate Challenge by Akarsh Pandey (Indore, India). Weather data: Open-Meteo (free, no key). Free to use, no login, works on any phone.</p>
@@ -232,8 +299,8 @@
 var STR = {
 en:{
   tagline:"Indoor night-heat protection for mothers-to-be. Every heat warning in India is about the outdoor afternoon — but the dangerous heat is inside the home, at night. NightMaa estimates it, before the night begins.",
-  locTitle:"1 · Your place", locSub:"Tap your city, or search for any town. NightMaa uses the live weather forecast for that place.",
-  searchPh:"Search any city or town…", searchBtn:"Search",
+  locTitle:"1 · Your place", locSub:"Tap a city, use your location, or search any city in the world. NightMaa uses the live weather forecast for that place.",
+  searchPh:"Search any city in the world…", searchBtn:"Search",
   homeTitle:"2 · The home", homeSub:"Four quick questions about the home. Homes hold the day's heat very differently — a tin roof and a cool, airy room are different worlds at midnight.",
   roofL:"Roof type", floorL:"Floor", ventL:"Ventilation", coolL:"Cooling available",
   loading:"Loading tonight's forecast…",
@@ -241,18 +308,38 @@ en:{
   errSearch:"No place found with that name. Try a different spelling.", errSearchNet:"Search failed — please check the connection and try again.",
   riskK:"Tonight's indoor heat risk in this home",
   disclaimerShort:"⚠ This is heat-risk information to support your decisions — not a medical diagnosis. If you feel unwell, contact your ASHA worker or doctor.",
-  stMinK:"Coolest indoors tonight", stPeakK:"Evening peak indoors", stHoursK:"Hours above 32°C indoors", stOutK:"Coolest outdoors tonight",
-  lgIn:"Estimated indoors", lgOut:"Outdoors (forecast)", lgThr:"32°C — danger line from research",
+  stMinK:"Coolest indoors tonight", stPeakK:"Evening peak indoors", stHoursK:"Hours above {thr} indoors", stOutK:"Coolest outdoors tonight",
+  lgIn:"Estimated indoors", lgOut:"Outdoors (forecast)", lgThr:"{thr} — danger line from research",
   howT:"How we estimate indoor temperature",
-  howB:"NightMaa estimates tonight's indoor temperature from the live outdoor forecast (Open-Meteo) plus simple adjustments for the home: a tin or asbestos roof adds about +2.5°C, a concrete slab +1.5°C, tile or thatch +0.5°C; upper floors and poor ventilation add a little more; a cooler or AC subtracts. These adjustments are informed by published Indian housing-heat research, including sensor studies showing that homes stay several degrees hotter than the street at night. This is a transparent estimate, not a sensor measurement — the real temperature in a given home will differ. The risk bands are a guide for action, not a medical diagnosis.",
+  howB:"NightMaa estimates tonight's indoor temperature from outdoor weather data (Open-Meteo — the live forecast, or the recorded ERA5 archive in replay mode) plus simple adjustments for the home: a tin or asbestos roof adds about +2.5°C, a concrete slab +1.5°C, tile or thatch +0.5°C; upper floors and poor ventilation add a little more; a cooler or AC subtracts. These adjustments are informed by published Indian housing-heat research, including sensor studies showing that homes stay several degrees hotter than the street at night. This is a transparent estimate, not a sensor measurement — the real temperature in a given home will differ. The risk bands are a guide for action, not a medical diagnosis.",
   outTitle:"Next 3 nights", outSub:"The same estimate for the coming nights, so a family — or an ASHA worker planning visits — can see a hot spell coming.",
   planTitle:"Tonight's plan", planSub:"Simple steps that genuinely cool a room and protect a pregnancy on a hot night.",
   ashaTitle:"For ASHA workers",
-  ashaB:"A one-minute check, built for the home visit you already make. Open this page on any phone, tap the mother's village or town, answer four questions about her home — roof, floor, ventilation, cooling — and you will see tonight's indoor heat risk for that home, in Hindi or English, with a simple plan you can explain in a minute. No login, no app to install, no cost. Mothers whose homes show High or Very High risk before a hot night are the ones to visit first the next morning, and to counsel on the danger signs. NightMaa gives heat-risk information to support your judgement — it is not a medical diagnosis.",
+  ashaB:"A one-minute check, built for the home visit you already make. Open this page on any phone, tap the mother's village or town, answer four questions about her home — roof, floor, ventilation, cooling — and you will see tonight's indoor heat risk for that home, in Hindi or English, with a simple plan you can explain in a minute. No login, no app to install, no cost. Mothers whose homes show High or Very High risk before a hot night are the ones to visit first the next morning, and to counsel on the danger signs. The same one-minute check is built for frontline workers everywhere — community health workers, midwives and Anganwadi workers — and speaks eight languages. NightMaa gives heat-risk information to support your judgement — it is not a medical diagnosis.",
   evTitle:"Why this matters — the research", evSub:"NightMaa is built on published evidence, not guesswork.",
   footDisc:"Important: NightMaa provides heat-risk information to support decisions by families and frontline health workers. It is not a medical diagnosis, and it does not replace advice from a doctor, nurse or ASHA worker. Indoor temperatures are estimates from outdoor weather and housing type — not sensor readings.",
-  footProto:"Prototype built for the MIT Solve 2027 Global Climate Challenge by Akarsh Pandey (Indore, India). Weather data: Open-Meteo (free, no key). Free to use, no login, works on any phone.",
-  tonight:"Tonight", minIn:"Coolest indoors", hrsAbove:"hrs above 32°C", humLine:"Tonight's humidity outdoors: {a}–{b}%. High humidity makes heat harder for the body to bear.",
+  footProto:"Prototype built for the MIT Solve 2027 Global Climate Challenge by Akarsh Pandey (Indore, India). Weather data: Open-Meteo forecast and ERA5 archive (free, no key). Free to use, no login, works on any phone — in eight languages.",
+  modeTitle:"3 · Live tonight — or replay a hot night", modeSub:"In the cool season, tonight may look safe everywhere. Replay mode runs the same estimate on a real recorded hot night, so you can see what this home would face in a heatwave.",
+  modeLive:"Tonight (live)", modeReplay:"Replay a hot night",
+  replaySub:"Verified hot nights — tap one, or pick any past date for the place selected above.", replayDateL:"Or pick any past date",
+  replayNote:"Replay of a real recorded night — ERA5 data via Open-Meteo Archive.",
+  loadingReplay:"Loading that night's recorded weather…",
+  riskKReplay:"That night's indoor heat risk in this home", outTitleReplay:"The following 3 nights", outSubReplay:"The same estimate for the nights that followed, from the recorded archive.",
+  planTitleReplay:"That night's plan — what helps", tonightReplay:"That night", placeReplay:"Recorded night for: {p} · {d}",
+  geoBtn:"📍 Use my location", geoFail:"Could not get your location. Please allow location access, or search for your place instead.",
+  shareTitle:"Share tonight's plan", shareSub:"Send this night's summary to the mother or her family — for example, an ASHA worker forwarding the plan on WhatsApp.",
+  shareCopy:"Copy the plan", shareWa:"Share on WhatsApp", shareCopied:"Plan copied — you can paste it anywhere.",
+  shareMin:"Estimated coolest indoors", shareRisk:"Risk", shareHrs:"hours above the 32°C line", shareActsT:"For tonight:",
+  shareActs:["Open windows and doors on opposite sides after sunset so air can cross the room.","Keep water beside the bed and drink whenever you wake.","Sleep low, in the coolest room, in loose cotton clothes."],
+  shareDisc:"Heat-risk information from NightMaa — not a medical diagnosis. If she feels unwell, contact the ASHA worker or a doctor.",
+  valTitle:"Checked against published measurements", valSub:"How NightMaa's estimate compares with what sensors actually measured in Chennai homes.",
+  valColStudy:"Measured by sensors — Chennai study (50 homes)", valColEst:"NightMaa estimate — same kind of home",
+  valR1k:"Coolest point of the night, indoors", valR1s:"Rarely below 31°C", valR1n:"≈34.6°C — the home never leaves the danger zone",
+  valR2k:"Evening peak, indoors", valR2s:"≈34.7°C around 8–9 pm", valR2n:"≈36.8°C at 8 pm",
+  valR3k:"Time above 32°C indoors", valR3s:"Frequently above 32°C; worst homes 5,700–5,800 hours above 32°C", valR3n:"All 14 hours of the night window above 32°C",
+  valNote:"Read this honestly: the study placed sensors inside real homes (Oct 2025–Apr 2026, not peak summer). The NightMaa column is an estimate from outdoor weather for one recorded peak-summer night (Chennai, 20 May 2026, tin roof + poor ventilation), when the outdoors itself never fell below 31.4°C — a hotter night than the study period, so the estimate runs hotter too. What agrees is the pattern that matters: this kind of home does not cool below the danger zone at night and spends the whole night above 32°C. Exact degrees will differ home by home — which is why our next step is validation with low-cost ESP32 temperature loggers inside real homes.",
+  valBtn:"Replay this night — Chennai, tin roof, poor ventilation",
+  tonight:"Tonight", minIn:"Coolest indoors", hrsAbove:"hrs above {thr}", humLine:"Tonight's humidity outdoors: {a}–{b}%. High humidity makes heat harder for the body to bear.",
   placeNow:"Showing tonight for: {p}",
   riskNames:{low:"Low", mod:"Moderate", high:"High", vhigh:"Very High"},
   riskLine:"Indoors it may stay as warm as {peak} this evening and only cool to {min} tonight.",
@@ -284,8 +371,8 @@ en:{
 },
 hi:{
   tagline:"गर्भवती माताओं के लिए घर के अंदर की रात की गर्मी से सुरक्षा। भारत में गर्मी की हर चेतावनी बाहर की दोपहर के बारे में होती है — लेकिन असली ख़तरनाक गर्मी घर के अंदर, रात में होती है। NightMaa रात शुरू होने से पहले उसका अनुमान लगाता है।",
-  locTitle:"1 · आपकी जगह", locSub:"अपना शहर चुनें, या किसी भी कस्बे को खोजें। NightMaa उस जगह के लाइव मौसम पूर्वानुमान का उपयोग करता है।",
-  searchPh:"कोई भी शहर या कस्बा खोजें…", searchBtn:"खोजें",
+  locTitle:"1 · आपकी जगह", locSub:"शहर चुनें, अपनी जगह इस्तेमाल करें, या दुनिया का कोई भी शहर खोजें। NightMaa उस जगह के लाइव मौसम पूर्वानुमान का उपयोग करता है।",
+  searchPh:"दुनिया का कोई भी शहर खोजें…", searchBtn:"खोजें",
   homeTitle:"2 · घर कैसा है", homeSub:"घर के बारे में चार आसान सवाल। हर घर दिन की गर्मी अलग तरह से रोकता है — टिन की छत और हवादार ठंडा कमरा आधी रात को बिल्कुल अलग होते हैं।",
   roofL:"छत का प्रकार", floorL:"मंज़िल", ventL:"हवा का आना-जाना", coolL:"ठंडक का साधन",
   loading:"आज रात का पूर्वानुमान लाया जा रहा है…",
@@ -293,8 +380,8 @@ hi:{
   errSearch:"इस नाम की कोई जगह नहीं मिली। कोई और वर्तनी आज़माएँ।", errSearchNet:"खोज विफल — कृपया कनेक्शन जाँचकर फिर प्रयास करें।",
   riskK:"इस घर में आज रात की अंदर की गर्मी का जोखिम",
   disclaimerShort:"⚠ यह आपके निर्णय में मदद के लिए गर्मी-जोखिम की जानकारी है — चिकित्सा जाँच नहीं। तबीयत ठीक न लगे तो अपनी आशा कार्यकर्ता या डॉक्टर से संपर्क करें।",
-  stMinK:"आज रात अंदर सबसे ठंडा", stPeakK:"शाम को अंदर सबसे गर्म", stHoursK:"अंदर 32°C से ऊपर के घंटे", stOutK:"आज रात बाहर सबसे ठंडा",
-  lgIn:"अनुमानित अंदर का तापमान", lgOut:"बाहर (पूर्वानुमान)", lgThr:"32°C — शोध से ख़तरे की रेखा",
+  stMinK:"आज रात अंदर सबसे ठंडा", stPeakK:"शाम को अंदर सबसे गर्म", stHoursK:"अंदर {thr} से ऊपर के घंटे", stOutK:"आज रात बाहर सबसे ठंडा",
+  lgIn:"अनुमानित अंदर का तापमान", lgOut:"बाहर (पूर्वानुमान)", lgThr:"{thr} — शोध से ख़तरे की रेखा",
   howT:"हम अंदर के तापमान का अनुमान कैसे लगाते हैं",
   howB:"NightMaa आज रात के घर के अंदर के तापमान का अनुमान लाइव बाहरी पूर्वानुमान (Open-Meteo) और घर के लिए कुछ सरल समायोजनों से लगाता है: टिन या एस्बेस्टस की छत लगभग +2.5°C, कंक्रीट की छत +1.5°C, खपरैल या छप्पर +0.5°C जोड़ती है; ऊपरी मंज़िल और कम हवा का आना-जाना थोड़ा और बढ़ाते हैं; कूलर या AC घटाते हैं। ये समायोजन भारतीय आवास-गर्मी पर प्रकाशित शोध पर आधारित हैं — जिनमें सेंसर अध्ययनों ने दिखाया कि घर रात में सड़क की तुलना में कई डिग्री गर्म रहते हैं। यह एक पारदर्शी अनुमान है, सेंसर की माप नहीं: किसी घर का असली तापमान अलग हो सकता है। जोखिम श्रेणियाँ कार्रवाई के लिए मार्गदर्शन हैं, चिकित्सा जाँच नहीं।",
   outTitle:"अगली 3 रातें", outSub:"आने वाली रातों के लिए वही अनुमान, ताकि परिवार — या भ्रमण की योजना बनाती आशा कार्यकर्ता — गर्मी का दौर पहले से देख सके।",
@@ -304,7 +391,27 @@ hi:{
   evTitle:"यह क्यों ज़रूरी है — शोध", evSub:"NightMaa प्रकाशित सबूतों पर बना है, अटकलों पर नहीं।",
   footDisc:"महत्वपूर्ण: NightMaa परिवारों और अग्रिम पंक्ति के स्वास्थ्य कार्यकर्ताओं के निर्णय में मदद के लिए गर्मी-जोखिम की जानकारी देता है। यह चिकित्सा जाँच नहीं है, और डॉक्टर, नर्स या आशा कार्यकर्ता की सलाह का विकल्प नहीं है। अंदर के तापमान बाहरी मौसम और घर के प्रकार से लगाए गए अनुमान हैं — सेंसर की माप नहीं।",
   footProto:"MIT Solve 2027 Global Climate Challenge के लिए अकार्श पांडेय (इंदौर, भारत) द्वारा बनाया गया प्रोटोटाइप। मौसम डेटा: Open-Meteo (मुफ़्त, बिना कुंजी)। उपयोग मुफ़्त, कोई लॉगिन नहीं, किसी भी फोन पर चलता है।",
-  tonight:"आज रात", minIn:"अंदर सबसे ठंडा", hrsAbove:"घंटे 32°C से ऊपर", humLine:"आज रात बाहर की नमी: {a}–{b}%। ज़्यादा नमी में गर्मी शरीर पर और भारी पड़ती है।",
+  modeTitle:"3 · आज रात लाइव — या किसी गर्म रात का रीप्ले", modeSub:"ठंडे मौसम में आज रात हर जगह सुरक्षित लग सकती है। रीप्ले मोड उसी अनुमान को किसी असली दर्ज की गई गर्म रात पर चलाता है, ताकि आप देख सकें कि लू के दिनों में इस घर का क्या हाल होगा।",
+  modeLive:"आज रात (लाइव)", modeReplay:"गर्म रात का रीप्ले",
+  replaySub:"जाँची हुई गर्म रातें — कोई एक चुनें, या ऊपर चुनी जगह के लिए कोई भी पिछली तारीख़ चुनें।", replayDateL:"या कोई पिछली तारीख़ चुनें",
+  replayNote:"किसी असली दर्ज रात का रीप्ले — Open-Meteo Archive के ERA5 डेटा से।",
+  loadingReplay:"उस रात का दर्ज मौसम लाया जा रहा है…",
+  riskKReplay:"उस रात इस घर में अंदर की गर्मी का जोखिम", outTitleReplay:"उसके बाद की 3 रातें", outSubReplay:"दर्ज किए गए डेटा से, उसके बाद की रातों के लिए वही अनुमान।",
+  planTitleReplay:"उस रात की योजना — क्या मदद करता", tonightReplay:"उस रात", placeReplay:"दर्ज रात का अनुमान: {p} · {d}",
+  geoBtn:"📍 मेरी जगह इस्तेमाल करें", geoFail:"आपकी जगह नहीं मिल पाई। कृपया लोकेशन की अनुमति दें, या अपनी जगह खोजकर चुनें।",
+  shareTitle:"आज रात की योजना साझा करें", shareSub:"आज रात का सार माँ या उसके परिवार को भेजें — जैसे आशा कार्यकर्ता WhatsApp पर योजना भेजती है।",
+  shareCopy:"योजना कॉपी करें", shareWa:"WhatsApp पर साझा करें", shareCopied:"योजना कॉपी हो गई — कहीं भी पेस्ट कर सकते हैं।",
+  shareMin:"अनुमानित अंदर सबसे ठंडा", shareRisk:"जोखिम", shareHrs:"घंटे 32°C की रेखा से ऊपर", shareActsT:"आज रात के लिए:",
+  shareActs:["सूरज ढलने के बाद आमने-सामने की खिड़कियाँ-दरवाज़े खोलें ताकि हवा आर-पार बहे।","बिस्तर के पास पानी रखें और जब भी आँख खुले, पानी पिएँ।","सबसे ठंडे कमरे में, नीचे, ढीले सूती कपड़े पहनकर सोएँ।"],
+  shareDisc:"NightMaa की गर्मी-जोखिम जानकारी — चिकित्सा जाँच नहीं। तबीयत ठीक न लगे तो आशा कार्यकर्ता या डॉक्टर से संपर्क करें।",
+  valTitle:"प्रकाशित मापों से जाँच", valSub:"NightMaa का अनुमान चेन्नई के घरों में सेंसरों से असल में मापे गए तापमान से कितना मेल खाता है।",
+  valColStudy:"सेंसरों से मापा — चेन्नई अध्ययन (50 घर)", valColEst:"NightMaa अनुमान — उसी तरह का घर",
+  valR1k:"रात में अंदर का सबसे ठंडा समय", valR1s:"शायद ही कभी 31°C से नीचे", valR1n:"≈34.6°C — घर ख़तरे के दायरे से बाहर ही नहीं आता",
+  valR2k:"शाम का सबसे गर्म समय, अंदर", valR2s:"रात 8–9 बजे ≈34.7°C", valR2n:"रात 8 बजे ≈36.8°C",
+  valR3k:"अंदर 32°C से ऊपर का समय", valR3s:"अक्सर 32°C से ऊपर; सबसे बुरे घरों में 5,700–5,800 घंटे 32°C से ऊपर", valR3n:"रात की पूरी 14 घंटों की अवधि 32°C से ऊपर",
+  valNote:"इसे ईमानदारी से पढ़ें: अध्ययन में असली घरों के अंदर सेंसर लगाए गए थे (अक्टूबर 2025–अप्रैल 2026, चरम गर्मी नहीं)। NightMaa वाला स्तंभ एक दर्ज चरम-गर्मी रात (चेन्नई, 20 मई 2026, टिन की छत + कम हवादारी) के बाहरी मौसम से लगाया गया अनुमान है, जब बाहर का तापमान ही 31.4°C से नीचे नहीं गया — अध्ययन अवधि से ज़्यादा गर्म रात, इसलिए अनुमान भी ज़्यादा गर्म है। जो बात मेल खाती है, वही मायने रखती है: इस तरह का घर रात में ख़तरे के दायरे से नीचे ठंडा नहीं होता और पूरी रात 32°C से ऊपर रहता है। हर घर के असली अंक अलग होंगे — इसीलिए हमारा अगला कदम असली घरों के अंदर कम लागत वाले ESP32 तापमान लॉगर लगाकर इस मॉडल की जाँच करना है।",
+  valBtn:"इस रात का रीप्ले देखें — चेन्नई, टिन की छत, कम हवादारी",
+  tonight:"आज रात", minIn:"अंदर सबसे ठंडा", hrsAbove:"घंटे {thr} से ऊपर", humLine:"आज रात बाहर की नमी: {a}–{b}%। ज़्यादा नमी में गर्मी शरीर पर और भारी पड़ती है।",
   placeNow:"आज रात का अनुमान: {p}",
   riskNames:{low:"कम", mod:"मध्यम", high:"उच्च", vhigh:"बहुत उच्च"},
   riskLine:"आज शाम अंदर का तापमान {peak} तक रह सकता है और रात में केवल {min} तक ही ठंडा होगा।",
@@ -335,6 +442,442 @@ hi:{
   dangerB:"चक्कर आना या बेहोश होना · बच्चे की हलचल सामान्य से बहुत कम होना · तेज़ सिरदर्द · चेहरे या हाथों पर अचानक सूजन · उल्टी, या पानी भी न रुकना · बुखार, दर्द (संकुचन) या पानी का रिसाव। → तुरंत अपनी आशा कार्यकर्ता या डॉक्टर से संपर्क करें, या नज़दीकी अस्पताल जाएँ।"
 }};
 
+/* ============ Additional languages (v2) ============ */
+STR.bn = {
+  tagline:"গর্ভবতী মায়েদের জন্য ঘরের ভেতরের রাতের তাপ থেকে সুরক্ষা। ভারতের প্রতিটি তাপ-সতর্কতা বাইরের দুপুর নিয়ে — কিন্তু বিপজ্জনক তাপ থাকে ঘরের ভেতরে, রাতে। NightMaa রাত শুরু হওয়ার আগেই তার হিসাব করে।",
+  locTitle:"1 · আপনার জায়গা", locSub:"একটি শহরে চাপ দিন, নিজের অবস্থান ব্যবহার করুন, অথবা বিশ্বের যেকোনো শহর খুঁজুন। NightMaa সেই জায়গার লাইভ আবহাওয়া পূর্বাভাস ব্যবহার করে।",
+  searchPh:"বিশ্বের যেকোনো শহর খুঁজুন…", searchBtn:"খুঁজুন",
+  homeTitle:"2 · বাড়িটি কেমন", homeSub:"বাড়ি সম্পর্কে চারটি সহজ প্রশ্ন। প্রতিটি বাড়ি দিনের তাপ আলাদাভাবে ধরে রাখে — টিনের ছাদ আর হাওয়াদার ঠান্ডা ঘর মাঝরাতে সম্পূর্ণ আলাদা।",
+  roofL:"ছাদের ধরন", floorL:"তলা", ventL:"বাতাস চলাচল", coolL:"ঠান্ডা রাখার ব্যবস্থা",
+  loading:"আজ রাতের পূর্বাভাস আনা হচ্ছে…",
+  errLoad:"আবহাওয়ার পূর্বাভাস আনা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।", retry:"আবার চেষ্টা করুন",
+  errSearch:"এই নামে কোনো জায়গা পাওয়া যায়নি। অন্য বানান চেষ্টা করুন।", errSearchNet:"খোঁজ ব্যর্থ — সংযোগ দেখে আবার চেষ্টা করুন।",
+  riskK:"এই বাড়িতে আজ রাতে ভেতরের তাপের ঝুঁকি",
+  disclaimerShort:"⚠ এটি আপনার সিদ্ধান্তে সাহায্যের জন্য তাপ-ঝুঁকির তথ্য — চিকিৎসা নির্ণয় নয়। অসুস্থ লাগলে আপনার ASHA কর্মী বা ডাক্তারের সঙ্গে যোগাযোগ করুন।",
+  stMinK:"আজ রাতে ভেতরে সবচেয়ে ঠান্ডা", stPeakK:"সন্ধ্যায় ভেতরে সবচেয়ে গরম", stHoursK:"ভেতরে {thr}-এর উপরে ঘণ্টা", stOutK:"আজ রাতে বাইরে সবচেয়ে ঠান্ডা",
+  lgIn:"আনুমানিক ভেতরের তাপ", lgOut:"বাইরে (পূর্বাভাস)", lgThr:"{thr} — গবেষণা থেকে বিপদরেখা",
+  howT:"আমরা ভেতরের তাপমাত্রা কীভাবে হিসাব করি",
+  howB:"NightMaa বাইরের আবহাওয়ার তথ্য (Open-Meteo — লাইভ পূর্বাভাস, অথবা রিপ্লে মোডে সংরক্ষিত ERA5 তথ্য) এবং বাড়ির জন্য সহজ সমন্বয় দিয়ে রাতের ভেতরের তাপমাত্রা হিসাব করে: টিন বা অ্যাসবেস্টস ছাদ প্রায় +2.5°C, কংক্রিট ছাদ +1.5°C, টালি বা খড়ের ছাদ +0.5°C যোগ করে; উপরের তলা ও কম বাতাস চলাচল আরও কিছুটা বাড়ায়; কুলার বা AC কমায়। এই সমন্বয়গুলি প্রকাশিত ভারতীয় আবাসন-তাপ গবেষণার উপর ভিত্তি করে — যেখানে সেন্সর গবেষণায় দেখা গেছে বাড়ি রাতে রাস্তার চেয়ে কয়েক ডিগ্রি বেশি গরম থাকে। এটি একটি স্বচ্ছ হিসাব, সেন্সরের মাপ নয় — কোনো নির্দিষ্ট বাড়ির আসল তাপমাত্রা আলাদা হবে। ঝুঁকির স্তরগুলি কাজের জন্য নির্দেশনা, চিকিৎসা নির্ণয় নয়।",
+  outTitle:"পরের 3 রাত", outSub:"আসন্ন রাতগুলির জন্য একই হিসাব, যাতে একটি পরিবার — অথবা সফরের পরিকল্পনা করা ASHA কর্মী — গরমের ঢেউ আগেই দেখতে পায়।",
+  planTitle:"আজ রাতের পরিকল্পনা", planSub:"সহজ পদক্ষেপ যা সত্যিই ঘর ঠান্ডা করে এবং গরম রাতে গর্ভাবস্থাকে রক্ষা করে।",
+  ashaTitle:"ASHA কর্মীদের জন্য",
+  ashaB:"আপনার নিয়মিত বাড়ি-সফরের জন্য তৈরি এক মিনিটের পরীক্ষা। যেকোনো ফোনে এই পেজটি খুলুন, মায়ের গ্রাম বা শহর বেছে নিন, তার বাড়ি সম্পর্কে চারটি প্রশ্নের উত্তর দিন — ছাদ, তলা, বাতাস চলাচল, ঠান্ডা রাখার ব্যবস্থা — এবং আপনি আজ রাতের জন্য সেই বাড়ির ভেতরের তাপের ঝুঁকি দেখতে পাবেন, এক মিনিটে বোঝানো যায় এমন সহজ পরিকল্পনাসহ। কোনো লগইন নেই, অ্যাপ বসাতে হয় না, কোনো খরচ নেই। যেসব মায়ের বাড়ি গরম রাতের আগে উচ্চ বা খুব উচ্চ ঝুঁকি দেখায়, পরদিন সকালে তাদের কাছেই আগে যান এবং বিপদ-চিহ্নগুলি বোঝান। একই এক-মিনিটের পরীক্ষা বিশ্বের সর্বত্র সম্মুখসারির কর্মীদের জন্য — কমিউনিটি হেলথ কর্মী, ধাত্রী ও অঙ্গনওয়াড়ি কর্মীদের জন্য — আটটি ভাষায় তৈরি। NightMaa আপনার সিদ্ধান্তে সাহায্যের জন্য তাপ-ঝুঁকির তথ্য দেয় — এটি চিকিৎসা নির্ণয় নয়।",
+  evTitle:"এটি কেন জরুরি — গবেষণা", evSub:"NightMaa প্রকাশিত প্রমাণের উপর তৈরি, অনুমানের উপর নয়।",
+  footDisc:"গুরুত্বপূর্ণ: NightMaa পরিবার ও সম্মুখসারির স্বাস্থ্যকর্মীদের সিদ্ধান্তে সাহায্যের জন্য তাপ-ঝুঁকির তথ্য দেয়। এটি চিকিৎসা নির্ণয় নয় এবং ডাক্তার, নার্স বা ASHA কর্মীর পরামর্শের বিকল্প নয়। ভেতরের তাপমাত্রা বাইরের আবহাওয়া ও বাড়ির ধরন থেকে করা হিসাব — সেন্সরের মাপ নয়।",
+  footProto:"MIT Solve 2027 Global Climate Challenge-এর জন্য Akarsh Pandey (ইন্দোর, ভারত) নির্মিত প্রোটোটাইপ। আবহাওয়ার তথ্য: Open-Meteo পূর্বাভাস ও ERA5 সংরক্ষণাগার (বিনামূল্যে, চাবি ছাড়া)। ব্যবহার বিনামূল্যে, লগইন নেই, যেকোনো ফোনে চলে — আটটি ভাষায়।",
+  modeTitle:"3 · আজ রাতে লাইভ — অথবা একটি গরম রাতের রিপ্লে", modeSub:"শীতের মরসুমে আজ রাত সর্বত্র নিরাপদ মনে হতে পারে। রিপ্লে মোড একই হিসাব একটি আসল রেকর্ড করা গরম রাতের উপর চালায়, যাতে আপনি দেখতে পারেন তাপপ্রবাহে এই বাড়ির কী হবে।",
+  modeLive:"আজ রাত (লাইভ)", modeReplay:"একটি গরম রাতের রিপ্লে",
+  replaySub:"যাচাই করা গরম রাত — একটি বেছে নিন, অথবা উপরে বেছে নেওয়া জায়গার জন্য যেকোনো অতীত তারিখ বেছে নিন।", replayDateL:"অথবা যেকোনো অতীত তারিখ বেছে নিন",
+  replayNote:"একটি আসল রেকর্ড করা রাতের রিপ্লে — Open-Meteo Archive থেকে ERA5 তথ্য।",
+  loadingReplay:"সেই রাতের রেকর্ড করা আবহাওয়া আনা হচ্ছে…",
+  riskKReplay:"সেই রাতে এই বাড়িতে ভেতরের তাপের ঝুঁকি", outTitleReplay:"পরের 3 রাত", outSubReplay:"রেকর্ড করা তথ্য থেকে, পরের রাতগুলির জন্য একই হিসাব।",
+  planTitleReplay:"সেই রাতের পরিকল্পনা — যা কাজ করে", tonightReplay:"সেই রাত", placeReplay:"রেকর্ড করা রাত: {p} · {d}",
+  geoBtn:"📍 আমার অবস্থান ব্যবহার করুন", geoFail:"আপনার অবস্থান পাওয়া যায়নি। অবস্থানের অনুমতি দিন, অথবা আপনার জায়গা খুঁজে বেছে নিন।",
+  shareTitle:"আজ রাতের পরিকল্পনা শেয়ার করুন", shareSub:"আজ রাতের সারাংশ মা বা তার পরিবারের কাছে পাঠান — যেমন ASHA কর্মী WhatsApp-এ পরিকল্পনা পাঠান।",
+  shareCopy:"পরিকল্পনা কপি করুন", shareWa:"WhatsApp-এ শেয়ার করুন", shareCopied:"পরিকল্পনা কপি হয়েছে — যেকোনো জায়গায় পেস্ট করতে পারেন।",
+  shareMin:"আনুমানিক ভেতরে সবচেয়ে ঠান্ডা", shareRisk:"ঝুঁকি", shareHrs:"ঘণ্টা 32°C রেখার উপরে", shareActsT:"আজ রাতের জন্য:",
+  shareActs:["সূর্যাস্তের পর বিপরীত দিকের জানালা ও দরজা খুলুন যাতে বাতাস ঘরের মধ্যে দিয়ে বয়।","বিছানার পাশে পানি রাখুন এবং যখনই ঘুম ভাঙে পানি পান করুন।","সবচেয়ে ঠান্ডা ঘরে, নিচুতে, ঢিলা সুতির পোশাক পরে ঘুমান।"],
+  shareDisc:"NightMaa থেকে তাপ-ঝুঁকির তথ্য — চিকিৎসা নির্ণয় নয়। অসুস্থ লাগলে ASHA কর্মী বা ডাক্তারের সঙ্গে যোগাযোগ করুন।",
+  valTitle:"প্রকাশিত মাপের সঙ্গে যাচাই", valSub:"NightMaa-এর হিসাব চেন্নাইয়ের বাড়িতে সেন্সরে আসলে যা মাপা হয়েছিল তার সঙ্গে কতটা মেলে।",
+  valColStudy:"সেন্সরে মাপা — চেন্নাই গবেষণা (50টি বাড়ি)", valColEst:"NightMaa হিসাব — একই ধরনের বাড়ি",
+  valR1k:"রাতে ভেতরের সবচেয়ে ঠান্ডা মুহূর্ত", valR1s:"কদাচিৎ 31°C-এর নিচে", valR1n:"≈34.6°C — বাড়ি বিপদ-এলাকা থেকে বেরোয়ই না",
+  valR2k:"সন্ধ্যার সর্বোচ্চ, ভেতরে", valR2s:"রাত 8–9টায় ≈34.7°C", valR2n:"রাত 8টায় ≈36.8°C",
+  valR3k:"ভেতরে 32°C-এর উপরে সময়", valR3s:"প্রায়ই 32°C-এর উপরে; সবচেয়ে খারাপ বাড়িগুলিতে 5,700–5,800 ঘণ্টা 32°C-এর উপরে", valR3n:"রাতের পুরো 14 ঘণ্টাই 32°C-এর উপরে",
+  valNote:"এটি সততার সঙ্গে পড়ুন: গবেষণায় আসল বাড়ির ভেতরে সেন্সর বসানো হয়েছিল (অক্টোবর 2025–এপ্রিল 2026, চরম গ্রীষ্ম নয়)। NightMaa স্তম্ভটি একটি রেকর্ড করা চরম-গ্রীষ্মের রাতের (চেন্নাই, 20 মে 2026, টিনের ছাদ + কম বাতাস চলাচল) বাইরের আবহাওয়া থেকে করা হিসাব, যখন বাইরের তাপমাত্রাই 31.4°C-এর নিচে নামেনি — গবেষণার সময়ের চেয়ে গরম রাত, তাই হিসাবটাও গরম। যা মেলে তা-ই আসল কথা: এই ধরনের বাড়ি রাতে বিপদ-এলাকার নিচে ঠান্ডা হয় না এবং সারা রাত 32°C-এর উপরে থাকে। প্রতিটি বাড়ির আসল সংখ্যা আলাদা হবে — তাই আমাদের পরের পদক্ষেপ আসল বাড়ির ভেতরে কম খরচের ESP32 তাপমাত্রা লগার দিয়ে এই মডেলের যাচাই।",
+  valBtn:"এই রাতের রিপ্লে দেখুন — চেন্নাই, টিনের ছাদ, কম বাতাস চলাচল",
+  tonight:"আজ রাত", minIn:"ভেতরে সবচেয়ে ঠান্ডা", hrsAbove:"ঘণ্টা {thr}-এর উপরে", humLine:"আজ রাতে বাইরের আর্দ্রতা: {a}–{b}%। বেশি আর্দ্রতায় তাপ শরীরের উপর আরও ভারী পড়ে।",
+  placeNow:"আজ রাতের হিসাব: {p}",
+  riskNames:{low:"কম", mod:"মাঝারি", high:"উচ্চ", vhigh:"খুব উচ্চ"},
+  riskLine:"ভেতরে আজ সন্ধ্যায় {peak} পর্যন্ত গরম থাকতে পারে এবং রাতে শুধু {min} পর্যন্ত ঠান্ডা হবে।",
+  intro:{
+    low:"আজ রাত এই বাড়িতে তুলনামূলক নিরাপদ মনে হচ্ছে। তবু নিচের মূল নিয়মগুলি মানুন — ভেতরের তাপ দ্রুত বাড়তে পারে, এবং গর্ভাবস্থায় শরীরের উপর তাপের চাপ বেশি পড়ে।",
+    mod:"আজ রাতে ভেতরে গরম লাগবে। নিচের পরিকল্পনা মানুন, এবং সারা রাত নিজের শরীরের দিকে খেয়াল রাখুন।",
+    high:"আজ রাতের ভেতরের তাপ গর্ভাবস্থায় সত্যিকারের ঝুঁকি। নিচের পরিকল্পনা মন দিয়ে মানুন এবং সবচেয়ে ঠান্ডা ঘরে ঘুমান।",
+    vhigh:"আজ রাতের ভেতরের তাপ গর্ভাবস্থায় বিপজ্জনক। নিচের পরিকল্পনা মানুন, সম্ভব হলে সবচেয়ে ঠান্ডা জায়গায় ঘুমান — প্রয়োজনে আত্মীয় বা প্রতিবেশীর ঠান্ডা ঘরেও — এবং আজই আপনার ASHA কর্মীর সঙ্গে কথা বলুন।"
+  },
+  advTitles:["আজ রাতে ঘর ঠান্ডা রাখুন","পানি — পান করতে থাকুন","ঘুমের প্রস্তুতি","বিশ্রাম ও আগামীকাল"],
+  adv:[
+    ["সূর্যাস্তের পর, বাইরের বাতাস ঘরের চেয়ে ঠান্ডা হলে, বিপরীত দিকের জানালা ও দরজা খুলুন যাতে বাতাস ঘরের মধ্যে দিয়ে বয়।",
+     "সন্ধ্যায় ছাদে ও মেঝেতে পানি ছিটান — শুকানোর সময় পানি তাপ নিয়ে যায়। টিন ও কংক্রিট ছাদে এটি সবচেয়ে ভালো কাজ করে।",
+     "পাখার সামনে বা জানালার বাতাসে ভেজা সুতির চাদর বা কাপড় ঝুলান — বাষ্পীভবনে বাতাস ঠান্ডা হয়।",
+     "কুলার থাকলে সন্ধ্যায় (প্রায় রাত 8–10টা) চালান, যখন ভেতরের তাপ সাধারণত সবচেয়ে বেশি থাকে।",
+     "আগামীকালের জন্য: গরম দুপুরে (12–4টা) জানালা ও পর্দা বন্ধ রাখুন যাতে কম তাপ ভেতরে ঢোকে।"],
+    ["বিছানার পাশে ভরা বোতল বা মাটির কলসি রাখুন। যখনই ঘুম ভাঙে পানি পান করুন — খুব তৃষ্ণা পাওয়ার অপেক্ষা করবেন না।",
+     "সারা দিনে 8–10 গ্লাস পানি পান করুন। অনেক ঘাম হলে পানিতে এক চিমটি লবণ ও চিনি (ঘরে তৈরি ORS-এর মতো) সাহায্য করে — যদি না ডাক্তার লবণ বা পানিতে নিষেধ করে থাকেন।",
+     "সন্ধ্যায় দেরিতে চা ও কফি এড়ান — এতে প্রস্রাব বেশি হয় এবং শরীরের পানি কমে।"],
+    ["ঢিলা সুতির পোশাক পরুন, এবং কম্বলের বদলে হালকা সুতির চাদর নিন।",
+     "নিচুতে ঘুমান — মেঝেতে বা সবচেয়ে নিচু খাটে — কারণ ঠান্ডা বাতাস মেঝের কাছে থাকে। ফোমের চেয়ে সুতির তোষক বা মাদুর ঠান্ডা লাগে।",
+     "ঘুমানোর আগে ঠান্ডা পানিতে হাত, পা ও মুখ ধুন, বা গা মুছে নিন — ঘুম তাড়াতাড়ি আসে।",
+     "শোবার ঘর সবচেয়ে গরম হলে, আজ রাতে সবচেয়ে ঠান্ডা ঘরে ঘুমান — মশারিসহ বারান্দা গরম বন্ধ ঘরের চেয়ে নিরাপদ হতে পারে।"],
+    ["আগামীকাল সবচেয়ে গরম সময়ে (12–4টা) ভারী কাজ এড়ান; ছায়ায় বিশ্রাম নিন এবং অসুস্থ লাগলে আজ রাতেই পরিবারকে জানান।",
+     "আজ রাত খুব গরম হলে, আগামীকালের বিশ্রামের পরিকল্পনা এখনই করুন — পরপর কয়েকটি গরম রাতে তাপের চাপ জমতে থাকে।"]
+  ],
+  dangerT:"⚠ বিপদ-চিহ্ন — সঙ্গে সঙ্গে সাহায্য নিন",
+  dangerB:"মাথা ঘোরা বা অজ্ঞান হওয়া · শিশুর নড়াচড়া স্বাভাবিকের চেয়ে অনেক কম · প্রচণ্ড মাথাব্যথা · মুখ বা হাতে হঠাৎ ফোলা · বমি, বা পানি ধরে রাখতে না পারা · জ্বর, সংকোচন (ব্যথা) বা পানি ভাঙা। → সঙ্গে সঙ্গে আপনার ASHA কর্মী বা ডাক্তারের সঙ্গে যোগাযোগ করুন, অথবা নিকটতম হাসপাতালে যান।"
+};
+STR.es = {
+  tagline:"Protección contra el calor nocturno en interiores para futuras madres. Todas las alertas de calor hablan de la tarde al aire libre, pero el calor peligroso está dentro del hogar, de noche. NightMaa lo estima antes de que empiece la noche.",
+  locTitle:"1 · Su lugar", locSub:"Toque una ciudad, use su ubicación o busque cualquier ciudad del mundo. NightMaa usa el pronóstico del tiempo en vivo de ese lugar.",
+  searchPh:"Busque cualquier ciudad del mundo…", searchBtn:"Buscar",
+  homeTitle:"2 · La vivienda", homeSub:"Cuatro preguntas rápidas sobre la vivienda. Cada casa guarda el calor del día de forma muy distinta: un techo de chapa y una habitación fresca y ventilada son mundos distintos a medianoche.",
+  roofL:"Tipo de techo", floorL:"Planta", ventL:"Ventilación", coolL:"Refrigeración disponible",
+  loading:"Cargando el pronóstico de esta noche…",
+  errLoad:"No se pudo cargar el pronóstico del tiempo. Compruebe la conexión a internet e inténtelo de nuevo.", retry:"Reintentar",
+  errSearch:"No se encontró ningún lugar con ese nombre. Pruebe otra ortografía.", errSearchNet:"La búsqueda falló: compruebe la conexión e inténtelo de nuevo.",
+  riskK:"Riesgo de calor interior esta noche en esta vivienda",
+  disclaimerShort:"⚠ Esto es información sobre riesgo por calor para apoyar sus decisiones, no un diagnóstico médico. Si se siente mal, contacte a su trabajadora ASHA o a su médico.",
+  stMinK:"Lo más fresco en interiores esta noche", stPeakK:"Pico de la tarde en interiores", stHoursK:"Horas por encima de {thr} en interiores", stOutK:"Lo más fresco al aire libre esta noche",
+  lgIn:"Estimado en interiores", lgOut:"Exterior (pronóstico)", lgThr:"{thr} — línea de peligro según la investigación",
+  howT:"Cómo estimamos la temperatura interior",
+  howB:"NightMaa estima la temperatura interior de esta noche a partir de los datos del tiempo exterior (Open-Meteo: el pronóstico en vivo, o el archivo registrado ERA5 en modo repetición) más ajustes sencillos según la vivienda: un techo de chapa o amianto suma unos +2,5 °C, una losa de hormigón +1,5 °C, teja o paja +0,5 °C; las plantas altas y la mala ventilación suman un poco más; un enfriador o el aire acondicionado restan. Estos ajustes se basan en investigaciones publicadas sobre calor en viviendas de la India, incluidos estudios con sensores que muestran que las casas se mantienen varios grados más calientes que la calle por la noche. Es una estimación transparente, no una medición con sensores: la temperatura real de cada casa será distinta. Los niveles de riesgo son una guía para actuar, no un diagnóstico médico.",
+  outTitle:"Próximas 3 noches", outSub:"La misma estimación para las noches siguientes, para que una familia — o una trabajadora ASHA que planifica visitas — vea venir una ola de calor.",
+  planTitle:"Plan para esta noche", planSub:"Pasos sencillos que de verdad enfrían una habitación y protegen un embarazo en una noche calurosa.",
+  ashaTitle:"Para las trabajadoras ASHA",
+  ashaB:"Una comprobación de un minuto, pensada para la visita domiciliaria que ya hace. Abra esta página en cualquier teléfono, toque el pueblo o la ciudad de la madre, responda cuatro preguntas sobre su vivienda — techo, planta, ventilación, refrigeración — y verá el riesgo de calor interior de esta noche para esa casa, con un plan sencillo que puede explicar en un minuto. Sin registro, sin instalar ninguna aplicación, sin coste. Las madres cuyas casas muestren riesgo Alto o Muy alto antes de una noche calurosa son las primeras a visitar a la mañana siguiente, y a quienes hay que explicar las señales de peligro. La misma comprobación de un minuto está pensada para el personal de primera línea en todo el mundo — agentes de salud comunitaria, matronas y trabajadoras Anganwadi — en ocho idiomas. NightMaa ofrece información sobre riesgo por calor para apoyar su criterio; no es un diagnóstico médico.",
+  evTitle:"Por qué importa: la investigación", evSub:"NightMaa se basa en evidencia publicada, no en conjeturas.",
+  footDisc:"Importante: NightMaa ofrece información sobre riesgo por calor para apoyar las decisiones de las familias y del personal sanitario de primera línea. No es un diagnóstico médico y no sustituye el consejo de un médico, una enfermera o una trabajadora ASHA. Las temperaturas interiores son estimaciones a partir del tiempo exterior y del tipo de vivienda, no lecturas de sensores.",
+  footProto:"Prototipo creado para el MIT Solve 2027 Global Climate Challenge por Akarsh Pandey (Indore, India). Datos del tiempo: pronóstico y archivo ERA5 de Open-Meteo (gratis, sin clave). Uso gratuito, sin registro, funciona en cualquier teléfono, en ocho idiomas.",
+  modeTitle:"3 · Esta noche en vivo, o repetir una noche calurosa", modeSub:"En la estación fresca, esta noche puede parecer segura en todas partes. El modo repetición aplica la misma estimación a una noche calurosa real registrada, para que vea lo que esta vivienda afrontaría en una ola de calor.",
+  modeLive:"Esta noche (en vivo)", modeReplay:"Repetir una noche calurosa",
+  replaySub:"Noches calurosas verificadas: toque una, o elija cualquier fecha pasada para el lugar seleccionado arriba.", replayDateL:"O elija cualquier fecha pasada",
+  replayNote:"Repetición de una noche real registrada: datos ERA5 vía Open-Meteo Archive.",
+  loadingReplay:"Cargando el tiempo registrado de esa noche…",
+  riskKReplay:"Riesgo de calor interior de esa noche en esta vivienda", outTitleReplay:"Las 3 noches siguientes", outSubReplay:"La misma estimación para las noches siguientes, desde el archivo registrado.",
+  planTitleReplay:"Plan de esa noche: lo que ayuda", tonightReplay:"Esa noche", placeReplay:"Noche registrada para: {p} · {d}",
+  geoBtn:"📍 Usar mi ubicación", geoFail:"No se pudo obtener su ubicación. Permita el acceso a la ubicación, o busque su lugar.",
+  shareTitle:"Compartir el plan de esta noche", shareSub:"Envíe el resumen de esta noche a la madre o a su familia; por ejemplo, una trabajadora ASHA que reenvía el plan por WhatsApp.",
+  shareCopy:"Copiar el plan", shareWa:"Compartir en WhatsApp", shareCopied:"Plan copiado: puede pegarlo donde quiera.",
+  shareMin:"Estimado, lo más fresco en interiores", shareRisk:"Riesgo", shareHrs:"horas por encima de la línea de 32 °C", shareActsT:"Para esta noche:",
+  shareActs:["Abra ventanas y puertas opuestas después de la puesta del sol para que el aire cruce la habitación.","Deje agua junto a la cama y beba cada vez que se despierte.","Duerma abajo, en la habitación más fresca, con ropa suelta de algodón."],
+  shareDisc:"Información sobre riesgo por calor de NightMaa: no es un diagnóstico médico. Si se siente mal, contacte a la trabajadora ASHA o a un médico.",
+  valTitle:"Comprobado con mediciones publicadas", valSub:"Cómo se compara la estimación de NightMaa con lo que los sensores midieron realmente en viviendas de Chennai.",
+  valColStudy:"Medido con sensores: estudio de Chennai (50 viviendas)", valColEst:"Estimación de NightMaa: el mismo tipo de vivienda",
+  valR1k:"El punto más fresco de la noche, en interiores", valR1s:"Rara vez por debajo de 31 °C", valR1n:"≈34,6 °C: la casa nunca sale de la zona de peligro",
+  valR2k:"Pico de la tarde, en interiores", valR2s:"≈34,7 °C hacia las 8–9 pm", valR2n:"≈36,8 °C a las 8 pm",
+  valR3k:"Tiempo por encima de 32 °C en interiores", valR3s:"Con frecuencia por encima de 32 °C; las peores viviendas, 5.700–5.800 horas por encima de 32 °C", valR3n:"Las 14 horas de la noche por encima de 32 °C",
+  valNote:"Léalo con honestidad: el estudio colocó sensores dentro de viviendas reales (octubre de 2025 a abril de 2026, sin el verano máximo). La columna de NightMaa es una estimación a partir del tiempo exterior de una noche registrada de pleno verano (Chennai, 20 de mayo de 2026, techo de chapa y mala ventilación), cuando el exterior nunca bajó de 31,4 °C: una noche más calurosa que el periodo del estudio, por lo que la estimación también es más alta. Lo que coincide es el patrón que importa: este tipo de vivienda no se enfría por debajo de la zona de peligro durante la noche y pasa toda la noche por encima de 32 °C. Los grados exactos variarán de casa en casa; por eso nuestro siguiente paso es validar con registradores de temperatura ESP32 de bajo coste dentro de viviendas reales.",
+  valBtn:"Repetir esta noche: Chennai, techo de chapa, mala ventilación",
+  tonight:"Esta noche", minIn:"Lo más fresco en interiores", hrsAbove:"h por encima de {thr}", humLine:"Humedad exterior esta noche: {a}–{b} %. La humedad alta hace que el calor pese más sobre el cuerpo.",
+  placeNow:"Mostrando esta noche para: {p}",
+  riskNames:{low:"Bajo", mod:"Moderado", high:"Alto", vhigh:"Muy alto"},
+  riskLine:"En interiores puede mantenerse tan cálido como {peak} esta tarde y solo refrescar hasta {min} esta noche.",
+  intro:{
+    low:"Esta noche parece comparativamente segura en esta vivienda. Aun así siga los consejos básicos: el calor interior puede subir rápido, y el embarazo hace que el cuerpo trabaje más con el calor.",
+    mod:"Esta noche se sentirá calor en interiores. Siga el plan siguiente y preste atención a cómo se siente durante la noche.",
+    high:"El calor interior de esta noche es un riesgo real durante el embarazo. Siga el plan siguiente con cuidado y duerma en la habitación más fresca que tenga.",
+    vhigh:"El calor interior de esta noche es peligroso durante el embarazo. Siga el plan siguiente, intente dormir en el lugar más fresco disponible — incluso la habitación más fresca de un familiar o vecino si puede — y hable hoy con su trabajadora ASHA."
+  },
+  advTitles:["Enfríe la habitación esta noche","Agua: siga bebiendo","Preparación para dormir","Descanso y mañana"],
+  adv:[
+    ["Después de la puesta del sol, cuando el aire de fuera sea más fresco que la habitación, abra ventanas y puertas en lados opuestos para que el aire cruce la habitación.",
+     "Por la tarde, rocíe agua sobre el techo y el suelo: al secarse, se lleva el calor. Funciona mejor con techos de chapa y de hormigón.",
+     "Cuelgue una sábana o tela de algodón húmeda frente al ventilador, o en la brisa de la ventana: la evaporación enfría el aire.",
+     "Si tiene un enfriador evaporativo, úselo por la tarde (sobre las 8–10 pm), cuando el calor interior suele alcanzar su máximo.",
+     "Para mañana: mantenga ventanas y cortinas cerradas durante la tarde de calor (12–4 pm) para que entre menos calor."],
+    ["Deje una botella llena o una vasija de agua junto a la cama. Beba cada vez que se despierte; no espere a tener mucha sed.",
+     "Intente beber 8–10 vasos de agua durante el día. Si ha sudado mucho, una pizca de sal y azúcar en el agua (como un suero casero) ayuda, salvo que su médico le haya limitado la sal o los líquidos.",
+     "Evite el té y el café a última hora de la tarde: hacen orinar más y perder agua."],
+    ["Use ropa suelta de algodón y una sábana ligera de algodón en lugar de una manta.",
+     "Duerma abajo — en el suelo o en la cama más baja — porque el aire fresco se queda cerca del suelo. Un colchón o esterilla de algodón se siente más fresco que la espuma.",
+     "Lávese las manos, los pies y la cara con agua fresca, o dese un baño rápido con esponja antes de acostarse: ayuda a dormirse.",
+     "Si el dormitorio es la habitación más calurosa, duerma esta noche en la habitación más fresca: una veranda con mosquitera puede ser más segura que una habitación cerrada y caliente."],
+    ["Evite el trabajo pesado en las horas de más calor de mañana (12–4 pm); descanse a la sombra y avise esta noche a su familia si se siente mal.",
+     "Si esta noche hace mucho calor, planifique ahora el descanso de mañana: el estrés por calor se acumula tras varias noches calurosas seguidas."]
+  ],
+  dangerT:"⚠ Señales de peligro: busque ayuda de inmediato",
+  dangerB:"Mareo o desmayo · mucho menos movimiento del bebé de lo habitual · dolor de cabeza intenso · hinchazón repentina de la cara o las manos · vómitos, o no poder retener el agua · fiebre, contracciones o pérdida de líquido. → Contacte de inmediato a su trabajadora ASHA o a su médico, o vaya al hospital más cercano."
+};
+
+STR.fr = {
+  tagline:"Protection des futures mamans contre la chaleur nocturne à l'intérieur des maisons. Toutes les alertes canicule parlent de l'après-midi dehors — mais la chaleur dangereuse est à l'intérieur, la nuit. NightMaa l'estime avant que la nuit commence.",
+  locTitle:"1 · Votre lieu", locSub:"Touchez une ville, utilisez votre position, ou cherchez n'importe quelle ville du monde. NightMaa utilise les prévisions météo en direct de ce lieu.",
+  searchPh:"Cherchez n'importe quelle ville du monde…", searchBtn:"Chercher",
+  homeTitle:"2 · Le logement", homeSub:"Quatre questions rapides sur le logement. Chaque maison garde la chaleur du jour très différemment : un toit en tôle et une pièce fraîche et aérée sont deux mondes différents à minuit.",
+  roofL:"Type de toit", floorL:"Étage", ventL:"Ventilation", coolL:"Refroidissement disponible",
+  loading:"Chargement des prévisions de cette nuit…",
+  errLoad:"Impossible de charger les prévisions météo. Vérifiez la connexion internet et réessayez.", retry:"Réessayer",
+  errSearch:"Aucun lieu trouvé sous ce nom. Essayez une autre orthographe.", errSearchNet:"Échec de la recherche — vérifiez la connexion et réessayez.",
+  riskK:"Risque de chaleur intérieure cette nuit dans ce logement",
+  disclaimerShort:"⚠ Ceci est une information sur le risque lié à la chaleur, pour vous aider à décider — pas un diagnostic médical. Si vous vous sentez mal, contactez votre agent ASHA ou votre médecin.",
+  stMinK:"Le plus frais à l'intérieur cette nuit", stPeakK:"Pic du soir à l'intérieur", stHoursK:"Heures au-dessus de {thr} à l'intérieur", stOutK:"Le plus frais dehors cette nuit",
+  lgIn:"Estimation à l'intérieur", lgOut:"Dehors (prévisions)", lgThr:"{thr} — seuil de danger d'après la recherche",
+  howT:"Comment nous estimons la température intérieure",
+  howB:"NightMaa estime la température intérieure de cette nuit à partir des données météo extérieures (Open-Meteo — les prévisions en direct, ou les archives enregistrées ERA5 en mode replay) plus des ajustements simples selon le logement : un toit en tôle ou en amiante ajoute environ +2,5 °C, une dalle en béton +1,5 °C, tuile ou chaume +0,5 °C ; les étages élevés et une mauvaise ventilation ajoutent un peu plus ; un rafraîchisseur ou la climatisation retranchent. Ces ajustements s'appuient sur des recherches publiées sur la chaleur dans les logements en Inde, notamment des études par capteurs montrant que les maisons restent plusieurs degrés plus chaudes que la rue la nuit. C'est une estimation transparente, pas une mesure par capteur — la température réelle de chaque maison sera différente. Les niveaux de risque sont un guide pour agir, pas un diagnostic médical.",
+  outTitle:"Les 3 prochaines nuits", outSub:"La même estimation pour les nuits à venir, pour qu'une famille — ou un agent ASHA qui planifie ses visites — voie venir une vague de chaleur.",
+  planTitle:"Le plan de cette nuit", planSub:"Des gestes simples qui refroidissent vraiment une pièce et protègent une grossesse pendant une nuit chaude.",
+  ashaTitle:"Pour les agents ASHA",
+  ashaB:"Un contrôle d'une minute, pensé pour la visite à domicile que vous faites déjà. Ouvrez cette page sur n'importe quel téléphone, touchez le village ou la ville de la mère, répondez à quatre questions sur son logement — toit, étage, ventilation, refroidissement — et vous verrez le risque de chaleur intérieure de cette nuit pour cette maison, avec un plan simple à expliquer en une minute. Aucune inscription, aucune application à installer, aucun coût. Les mères dont la maison affiche un risque Élevé ou Très élevé avant une nuit chaude sont à visiter en premier le lendemain matin, et à informer sur les signes de danger. Le même contrôle d'une minute est conçu pour les agents de première ligne partout dans le monde — agents de santé communautaires, sages-femmes et agents Anganwadi — en huit langues. NightMaa fournit une information sur le risque lié à la chaleur pour appuyer votre jugement — ce n'est pas un diagnostic médical.",
+  evTitle:"Pourquoi c'est important — la recherche", evSub:"NightMaa repose sur des preuves publiées, pas sur des suppositions.",
+  footDisc:"Important : NightMaa fournit une information sur le risque lié à la chaleur pour aider les familles et les soignants de première ligne à décider. Ce n'est pas un diagnostic médical et cela ne remplace pas l'avis d'un médecin, d'une infirmière ou d'un agent ASHA. Les températures intérieures sont des estimations à partir de la météo extérieure et du type de logement — pas des relevés de capteurs.",
+  footProto:"Prototype réalisé pour le MIT Solve 2027 Global Climate Challenge par Akarsh Pandey (Indore, Inde). Données météo : prévisions et archives ERA5 d'Open-Meteo (gratuit, sans clé). Gratuit, sans inscription, fonctionne sur tout téléphone — en huit langues.",
+  modeTitle:"3 · Cette nuit en direct — ou rejouer une nuit chaude", modeSub:"En saison fraîche, cette nuit peut sembler sûre partout. Le mode replay applique la même estimation à une nuit chaude réelle enregistrée, pour voir ce que ce logement affronterait pendant une canicule.",
+  modeLive:"Cette nuit (en direct)", modeReplay:"Rejouer une nuit chaude",
+  replaySub:"Nuits chaudes vérifiées — touchez-en une, ou choisissez n'importe quelle date passée pour le lieu sélectionné ci-dessus.", replayDateL:"Ou choisissez une date passée",
+  replayNote:"Replay d'une nuit réelle enregistrée — données ERA5 via Open-Meteo Archive.",
+  loadingReplay:"Chargement de la météo enregistrée de cette nuit…",
+  riskKReplay:"Risque de chaleur intérieure de cette nuit-là dans ce logement", outTitleReplay:"Les 3 nuits suivantes", outSubReplay:"La même estimation pour les nuits suivantes, depuis les archives enregistrées.",
+  planTitleReplay:"Le plan de cette nuit-là — ce qui aide", tonightReplay:"Cette nuit-là", placeReplay:"Nuit enregistrée pour : {p} · {d}",
+  geoBtn:"📍 Utiliser ma position", geoFail:"Impossible d'obtenir votre position. Autorisez l'accès à la position, ou cherchez votre lieu.",
+  shareTitle:"Partager le plan de cette nuit", shareSub:"Envoyez le résumé de cette nuit à la mère ou à sa famille — par exemple un agent ASHA qui transmet le plan sur WhatsApp.",
+  shareCopy:"Copier le plan", shareWa:"Partager sur WhatsApp", shareCopied:"Plan copié — vous pouvez le coller où vous voulez.",
+  shareMin:"Estimation, le plus frais à l'intérieur", shareRisk:"Risque", shareHrs:"heures au-dessus du seuil de 32 °C", shareActsT:"Pour cette nuit :",
+  shareActs:["Ouvrez fenêtres et portes opposées après le coucher du soleil pour que l'air traverse la pièce.","Gardez de l'eau près du lit et buvez à chaque réveil.","Dormez en bas, dans la pièce la plus fraîche, en vêtements amples en coton."],
+  shareDisc:"Information sur le risque de chaleur de NightMaa — pas un diagnostic médical. Si elle se sent mal, contactez l'agent ASHA ou un médecin.",
+  valTitle:"Vérifié par rapport aux mesures publiées", valSub:"Comment l'estimation de NightMaa se compare à ce que les capteurs ont réellement mesuré dans des logements de Chennai.",
+  valColStudy:"Mesuré par capteurs — étude de Chennai (50 logements)", valColEst:"Estimation NightMaa — même type de logement",
+  valR1k:"Le point le plus frais de la nuit, à l'intérieur", valR1s:"Rarement sous 31 °C", valR1n:"≈34,6 °C — la maison ne sort jamais de la zone de danger",
+  valR2k:"Pic du soir, à l'intérieur", valR2s:"≈34,7 °C vers 20 h–21 h", valR2n:"≈36,8 °C à 20 h",
+  valR3k:"Temps au-dessus de 32 °C à l'intérieur", valR3s:"Souvent au-dessus de 32 °C ; les pires logements : 5 700–5 800 heures au-dessus de 32 °C", valR3n:"Les 14 heures de la nuit au-dessus de 32 °C",
+  valNote:"Lisez ceci honnêtement : l'étude a placé des capteurs dans de vrais logements (octobre 2025 – avril 2026, hors pic de l'été). La colonne NightMaa est une estimation à partir de la météo extérieure d'une nuit enregistrée de plein été (Chennai, 20 mai 2026, toit en tôle et mauvaise ventilation), où l'extérieur lui-même n'est jamais descendu sous 31,4 °C — une nuit plus chaude que la période d'étude, donc l'estimation est aussi plus chaude. Ce qui concorde, c'est le schéma qui compte : ce type de logement ne refroidit pas sous la zone de danger la nuit et passe toute la nuit au-dessus de 32 °C. Les degrés exacts varieront d'une maison à l'autre — c'est pourquoi notre prochaine étape est la validation avec des enregistreurs de température ESP32 peu coûteux dans de vrais logements.",
+  valBtn:"Rejouer cette nuit — Chennai, toit en tôle, mauvaise ventilation",
+  tonight:"Cette nuit", minIn:"Le plus frais à l'intérieur", hrsAbove:"h au-dessus de {thr}", humLine:"Humidité extérieure cette nuit : {a}–{b} %. Une forte humidité rend la chaleur plus dure à supporter pour le corps.",
+  placeNow:"Cette nuit pour : {p}",
+  riskNames:{low:"Faible", mod:"Modéré", high:"Élevé", vhigh:"Très élevé"},
+  riskLine:"À l'intérieur, il peut faire jusqu'à {peak} ce soir et ne redescendre qu'à {min} cette nuit.",
+  intro:{
+    low:"Cette nuit semble relativement sûre dans ce logement. Suivez quand même les conseils de base ci-dessous — la chaleur intérieure peut monter vite, et la grossesse fait travailler le corps davantage sous la chaleur.",
+    mod:"Cette nuit, il fera chaud à l'intérieur. Suivez le plan ci-dessous et soyez attentive à ce que vous ressentez pendant la nuit.",
+    high:"La chaleur intérieure de cette nuit est un vrai risque pendant la grossesse. Suivez attentivement le plan ci-dessous et dormez dans la pièce la plus fraîche que vous avez.",
+    vhigh:"La chaleur intérieure de cette nuit est dangereuse pendant la grossesse. Suivez le plan ci-dessous, essayez de dormir dans l'endroit le plus frais disponible — même la pièce plus fraîche d'un parent ou d'un voisin si vous pouvez — et parlez dès aujourd'hui à votre agent ASHA."
+  },
+  advTitles:["Refroidir la pièce cette nuit","De l'eau — continuez à boire","Préparer le sommeil","Repos et demain"],
+  adv:[
+    ["Après le coucher du soleil, quand l'air extérieur devient plus frais que la pièce, ouvrez fenêtres et portes sur des côtés opposés pour que l'air traverse la pièce.",
+     "Le soir, aspergez d'eau le toit et le sol — en séchant, l'eau emporte la chaleur. Cela marche le mieux avec les toits en tôle et en béton.",
+     "Suspendez un drap ou un linge en coton humide devant le ventilateur, ou dans le courant d'air de la fenêtre — l'évaporation refroidit l'air.",
+     "Si vous avez un rafraîchisseur, faites-le fonctionner le soir (vers 20 h–22 h), quand la chaleur intérieure est en général à son maximum.",
+     "Pour demain : gardez fenêtres et rideaux fermés pendant l'après-midi chaud (12 h–16 h) pour que moins de chaleur entre."],
+    ["Gardez une bouteille pleine ou une jarre d'eau près du lit. Buvez à chaque réveil — n'attendez pas d'avoir très soif.",
+     "Visez 8 à 10 verres d'eau dans la journée. Si vous avez beaucoup transpiré, une pincée de sel et de sucre dans l'eau (comme un SRO maison) aide — sauf si votre médecin a limité votre sel ou vos liquides.",
+     "Évitez thé et café tard le soir — ils font uriner davantage et perdre de l'eau."],
+    ["Portez des vêtements amples en coton et utilisez un drap léger en coton plutôt qu'une couverture.",
+     "Dormez en bas — au sol ou sur le lit le plus bas — car l'air frais reste près du sol. Un matelas ou une natte en coton semble plus frais que la mousse.",
+     "Lavez-vous les mains, les pieds et le visage à l'eau fraîche, ou faites une toilette rapide à l'éponge avant de vous coucher — cela aide à s'endormir.",
+     "Si la chambre est la pièce la plus chaude, dormez cette nuit dans la pièce la plus fraîche — une véranda avec une moustiquaire peut être plus sûre qu'une pièce chaude et fermée."],
+    ["Évitez les travaux lourds aux heures les plus chaudes de demain (12 h–16 h) ; reposez-vous à l'ombre et prévenez votre famille dès ce soir si vous vous sentez mal.",
+     "Si cette nuit est très chaude, prévoyez dès maintenant le repos de demain — la fatigue due à la chaleur s'accumule sur plusieurs nuits chaudes d'affilée."]
+  ],
+  dangerT:"⚠ Signes de danger — demandez de l'aide immédiatement",
+  dangerB:"Vertiges ou évanouissement · mouvements du bébé nettement moins fréquents que d'habitude · mal de tête intense · gonflement soudain du visage ou des mains · vomissements, ou impossibilité de garder l'eau · fièvre, contractions ou perte de liquide. → Contactez immédiatement votre agent ASHA ou votre médecin, ou allez à l'hôpital le plus proche."
+};
+STR.pt = {
+  tagline:"Proteção contra o calor noturno dentro de casa para futuras mães. Todos os alertas de calor falam da tarde ao ar livre — mas o calor perigoso está dentro de casa, à noite. O NightMaa estima-o antes de a noite começar.",
+  locTitle:"1 · O seu local", locSub:"Toque numa cidade, use a sua localização ou pesquise qualquer cidade do mundo. O NightMaa usa a previsão do tempo ao vivo desse local.",
+  searchPh:"Pesquise qualquer cidade do mundo…", searchBtn:"Pesquisar",
+  homeTitle:"2 · A casa", homeSub:"Quatro perguntas rápidas sobre a casa. Cada casa guarda o calor do dia de forma muito diferente — um telhado de zinco e um quarto fresco e arejado são mundos diferentes à meia-noite.",
+  roofL:"Tipo de telhado", floorL:"Andar", ventL:"Ventilação", coolL:"Arrefecimento disponível",
+  loading:"A carregar a previsão desta noite…",
+  errLoad:"Não foi possível carregar a previsão do tempo. Verifique a ligação à internet e tente de novo.", retry:"Tentar de novo",
+  errSearch:"Nenhum local encontrado com esse nome. Tente outra grafia.", errSearchNet:"A pesquisa falhou — verifique a ligação e tente de novo.",
+  riskK:"Risco de calor interior esta noite nesta casa",
+  disclaimerShort:"⚠ Isto é informação sobre risco de calor para apoiar as suas decisões — não é um diagnóstico médico. Se se sentir mal, contacte a sua agente ASHA ou o seu médico.",
+  stMinK:"Mais fresco no interior esta noite", stPeakK:"Pico da tarde no interior", stHoursK:"Horas acima de {thr} no interior", stOutK:"Mais fresco no exterior esta noite",
+  lgIn:"Estimativa no interior", lgOut:"Exterior (previsão)", lgThr:"{thr} — linha de perigo segundo a investigação",
+  howT:"Como estimamos a temperatura interior",
+  howB:"O NightMaa estima a temperatura interior desta noite a partir dos dados do tempo exterior (Open-Meteo — a previsão ao vivo, ou o arquivo registado ERA5 no modo de repetição) mais ajustes simples conforme a casa: um telhado de zinco ou amianto soma cerca de +2,5 °C, uma laje de betão +1,5 °C, telha ou palha +0,5 °C; andares altos e má ventilação somam um pouco mais; um climatizador evaporativo ou ar condicionado subtraem. Estes ajustes baseiam-se em investigação publicada sobre calor em habitações na Índia, incluindo estudos com sensores que mostram que as casas ficam vários graus mais quentes do que a rua à noite. É uma estimativa transparente, não uma medição por sensor — a temperatura real de cada casa será diferente. Os níveis de risco são um guia para agir, não um diagnóstico médico.",
+  outTitle:"Próximas 3 noites", outSub:"A mesma estimativa para as noites seguintes, para que uma família — ou uma agente ASHA a planear visitas — veja uma onda de calor a chegar.",
+  planTitle:"Plano desta noite", planSub:"Passos simples que realmente arrefecem um quarto e protegem uma gravidez numa noite quente.",
+  ashaTitle:"Para as agentes ASHA",
+  ashaB:"Uma verificação de um minuto, feita para a visita domiciliária que já faz. Abra esta página em qualquer telemóvel, toque na aldeia ou cidade da mãe, responda a quatro perguntas sobre a casa dela — telhado, andar, ventilação, arrefecimento — e verá o risco de calor interior desta noite para essa casa, com um plano simples que pode explicar num minuto. Sem registo, sem instalar aplicação, sem custo. As mães cujas casas mostrem risco Alto ou Muito alto antes de uma noite quente são as primeiras a visitar na manhã seguinte, e a quem deve explicar os sinais de perigo. A mesma verificação de um minuto foi pensada para profissionais de primeira linha em todo o mundo — agentes comunitários de saúde, parteiras e trabalhadoras Anganwadi — em oito línguas. O NightMaa dá informação sobre risco de calor para apoiar o seu julgamento — não é um diagnóstico médico.",
+  evTitle:"Porque isto importa — a investigação", evSub:"O NightMaa baseia-se em evidência publicada, não em palpites.",
+  footDisc:"Importante: o NightMaa fornece informação sobre risco de calor para apoiar decisões de famílias e profissionais de saúde de primeira linha. Não é um diagnóstico médico e não substitui o conselho de um médico, enfermeiro ou agente ASHA. As temperaturas interiores são estimativas a partir do tempo exterior e do tipo de casa — não leituras de sensores.",
+  footProto:"Protótipo criado para o MIT Solve 2027 Global Climate Challenge por Akarsh Pandey (Indore, Índia). Dados do tempo: previsão e arquivo ERA5 do Open-Meteo (grátis, sem chave). Uso gratuito, sem registo, funciona em qualquer telemóvel — em oito línguas.",
+  modeTitle:"3 · Esta noite ao vivo — ou repetir uma noite quente", modeSub:"Na estação fresca, esta noite pode parecer segura em todo o lado. O modo de repetição aplica a mesma estimativa a uma noite quente real registada, para ver o que esta casa enfrentaria numa onda de calor.",
+  modeLive:"Esta noite (ao vivo)", modeReplay:"Repetir uma noite quente",
+  replaySub:"Noites quentes verificadas — toque numa, ou escolha qualquer data passada para o local selecionado acima.", replayDateL:"Ou escolha qualquer data passada",
+  replayNote:"Repetição de uma noite real registada — dados ERA5 via Open-Meteo Archive.",
+  loadingReplay:"A carregar o tempo registado dessa noite…",
+  riskKReplay:"Risco de calor interior dessa noite nesta casa", outTitleReplay:"As 3 noites seguintes", outSubReplay:"A mesma estimativa para as noites seguintes, a partir do arquivo registado.",
+  planTitleReplay:"Plano dessa noite — o que ajuda", tonightReplay:"Essa noite", placeReplay:"Noite registada para: {p} · {d}",
+  geoBtn:"📍 Usar a minha localização", geoFail:"Não foi possível obter a sua localização. Permita o acesso à localização, ou pesquise o seu local.",
+  shareTitle:"Partilhar o plano desta noite", shareSub:"Envie o resumo desta noite à mãe ou à sua família — por exemplo, uma agente ASHA a reencaminhar o plano no WhatsApp.",
+  shareCopy:"Copiar o plano", shareWa:"Partilhar no WhatsApp", shareCopied:"Plano copiado — pode colá-lo onde quiser.",
+  shareMin:"Estimativa, mais fresco no interior", shareRisk:"Risco", shareHrs:"horas acima da linha dos 32 °C", shareActsT:"Para esta noite:",
+  shareActs:["Abra janelas e portas em lados opostos depois do pôr do sol para o ar atravessar o quarto.","Deixe água junto à cama e beba sempre que acordar.","Durma em baixo, no quarto mais fresco, com roupa larga de algodão."],
+  shareDisc:"Informação sobre risco de calor do NightMaa — não é um diagnóstico médico. Se ela se sentir mal, contacte a agente ASHA ou um médico.",
+  valTitle:"Verificado com medições publicadas", valSub:"Como a estimativa do NightMaa se compara com o que os sensores mediram realmente em casas de Chennai.",
+  valColStudy:"Medido por sensores — estudo de Chennai (50 casas)", valColEst:"Estimativa NightMaa — o mesmo tipo de casa",
+  valR1k:"O ponto mais fresco da noite, no interior", valR1s:"Raramente abaixo de 31 °C", valR1n:"≈34,6 °C — a casa nunca sai da zona de perigo",
+  valR2k:"Pico da tarde, no interior", valR2s:"≈34,7 °C por volta das 20h–21h", valR2n:"≈36,8 °C às 20h",
+  valR3k:"Tempo acima de 32 °C no interior", valR3s:"Frequentemente acima de 32 °C; as piores casas, 5.700–5.800 horas acima de 32 °C", valR3n:"Todas as 14 horas da noite acima de 32 °C",
+  valNote:"Leia isto com honestidade: o estudo colocou sensores dentro de casas reais (outubro de 2025 – abril de 2026, fora do pico do verão). A coluna do NightMaa é uma estimativa a partir do tempo exterior de uma noite registada de pleno verão (Chennai, 20 de maio de 2026, telhado de zinco e má ventilação), em que o exterior nunca desceu abaixo de 31,4 °C — uma noite mais quente do que o período do estudo, por isso a estimativa também é mais quente. O que coincide é o padrão que importa: este tipo de casa não arrefece abaixo da zona de perigo durante a noite e passa a noite inteira acima de 32 °C. Os graus exatos irão variar de casa para casa — é por isso que o nosso próximo passo é a validação com registadores de temperatura ESP32 de baixo custo dentro de casas reais.",
+  valBtn:"Repetir esta noite — Chennai, telhado de zinco, má ventilação",
+  tonight:"Esta noite", minIn:"Mais fresco no interior", hrsAbove:"h acima de {thr}", humLine:"Humidade exterior esta noite: {a}–{b}%. A humidade alta torna o calor mais pesado para o corpo.",
+  placeNow:"A mostrar esta noite para: {p}",
+  riskNames:{low:"Baixo", mod:"Moderado", high:"Alto", vhigh:"Muito alto"},
+  riskLine:"No interior pode ficar tão quente como {peak} esta tarde e só arrefecer até {min} esta noite.",
+  intro:{
+    low:"Esta noite parece comparativamente segura nesta casa. Mesmo assim, siga os conselhos básicos abaixo — o calor interior pode subir depressa, e a gravidez faz o corpo trabalhar mais no calor.",
+    mod:"Esta noite vai sentir-se calor no interior. Siga o plano abaixo e preste atenção a como se sente durante a noite.",
+    high:"O calor interior desta noite é um risco real durante a gravidez. Siga o plano abaixo com cuidado e durma no quarto mais fresco que tiver.",
+    vhigh:"O calor interior desta noite é perigoso durante a gravidez. Siga o plano abaixo, tente dormir no local mais fresco disponível — mesmo o quarto mais fresco de um familiar ou vizinho, se puder — e fale hoje com a sua agente ASHA."
+  },
+  advTitles:["Arrefecer o quarto esta noite","Água — continue a beber","Preparação para dormir","Descanso e amanhã"],
+  adv:[
+    ["Depois do pôr do sol, quando o ar de fora ficar mais fresco do que o quarto, abra janelas e portas em lados opostos para o ar atravessar o quarto.",
+     "Ao fim da tarde, borrife água no telhado e no chão — ao secar, leva o calor consigo. Funciona melhor em telhados de zinco e de betão.",
+     "Pendure um lençol ou pano de algodão húmido em frente à ventoinha, ou na brisa da janela — a evaporação arrefece o ar.",
+     "Se tiver um climatizador evaporativo, use-o ao fim da tarde (cerca das 20h–22h), quando o calor interior costuma atingir o máximo.",
+     "Para amanhã: mantenha janelas e cortinas fechadas durante a tarde quente (12h–16h) para entrar menos calor."],
+    ["Deixe uma garrafa cheia ou um pote de água junto à cama. Beba sempre que acordar — não espere para ter muita sede.",
+     "Procure beber 8–10 copos de água ao longo do dia. Se suou muito, uma pitada de sal e açúcar na água (como um soro caseiro) ajuda — a menos que o seu médico tenha limitado o sal ou os líquidos.",
+     "Evite chá e café ao fim da tarde — fazem urinar mais e perder água."],
+    ["Use roupa larga de algodão e um lençol leve de algodão em vez de um cobertor.",
+     "Durma em baixo — no chão ou na cama mais baixa — porque o ar fresco fica perto do chão. Um colchão ou esteira de algodão sente-se mais fresco do que a espuma.",
+     "Lave as mãos, os pés e o rosto com água fresca, ou tome um banho rápido de esponja antes de deitar — ajuda a adormecer.",
+     "Se o quarto de dormir for o mais quente, durma esta noite no quarto mais fresco — uma varanda com rede mosquiteira pode ser mais segura do que um quarto quente e fechado."],
+    ["Evite trabalho pesado nas horas mais quentes de amanhã (12h–16h); descanse à sombra e avise a sua família esta noite se se sentir mal.",
+     "Se esta noite for muito quente, planeie já o descanso de amanhã — o esforço do calor acumula-se ao longo de várias noites quentes seguidas."]
+  ],
+  dangerT:"⚠ Sinais de perigo — procure ajuda imediatamente",
+  dangerB:"Tonturas ou desmaio · muito menos movimento do bebé do que o habitual · dor de cabeça forte · inchaço súbito do rosto ou das mãos · vómitos, ou não conseguir reter a água · febre, contrações ou perda de líquido. → Contacte imediatamente a sua agente ASHA ou o seu médico, ou vá ao hospital mais próximo."
+};
+
+STR.ur = {
+  tagline:"حاملہ ماؤں کے لیے گھر کے اندر رات کی گرمی سے تحفظ۔ ہندوستان میں گرمی کی ہر وارننگ باہر کی دوپہر کے بارے میں ہوتی ہے — لیکن خطرناک گرمی گھر کے اندر ہوتی ہے، رات کو۔ NightMaa رات شروع ہونے سے پہلے اس کا اندازہ لگاتا ہے۔",
+  locTitle:"1 · آپ کی جگہ", locSub:"کسی شہر پر ٹیپ کریں، اپنی لوکیشن استعمال کریں، یا دنیا کا کوئی بھی شہر تلاش کریں۔ NightMaa اس جگہ کے لائیو موسم کی پیش گوئی استعمال کرتا ہے۔",
+  searchPh:"دنیا کا کوئی بھی شہر تلاش کریں…", searchBtn:"تلاش کریں",
+  homeTitle:"2 · گھر کیسا ہے", homeSub:"گھر کے بارے میں چار آسان سوال۔ ہر گھر دن کی گرمی کو الگ طرح روکتا ہے — ٹین کی چھت اور ہوا دار ٹھنڈا کمرہ آدھی رات کو بالکل الگ ہوتے ہیں۔",
+  roofL:"چھت کی قسم", floorL:"منزل", ventL:"ہوا کا گزر", coolL:"ٹھنڈک کا انتظام",
+  loading:"آج رات کی پیش گوئی لائی جا رہی ہے…",
+  errLoad:"موسم کی پیش گوئی نہیں مل سکی۔ براہ کرم انٹرنیٹ کنکشن چیک کر کے دوبارہ کوشش کریں۔", retry:"دوبارہ کوشش کریں",
+  errSearch:"اس نام کی کوئی جگہ نہیں ملی۔ کوئی اور املا آزمائیں۔", errSearchNet:"تلاش ناکام — براہ کرم کنکشن چیک کر کے دوبارہ کوشش کریں۔",
+  riskK:"اس گھر میں آج رات اندر کی گرمی کا خطرہ",
+  disclaimerShort:"⚠ یہ آپ کے فیصلے میں مدد کے لیے گرمی کے خطرے کی معلومات ہے — طبی تشخیص نہیں۔ طبیعت ٹھیک نہ لگے تو اپنی آشا ورکر یا ڈاکٹر سے رابطہ کریں۔",
+  stMinK:"آج رات اندر سب سے ٹھنڈا", stPeakK:"شام کو اندر سب سے گرم", stHoursK:"اندر {thr} سے اوپر کے گھنٹے", stOutK:"آج رات باہر سب سے ٹھنڈا",
+  lgIn:"اندازاً اندر کا درجہ حرارت", lgOut:"باہر (پیش گوئی)", lgThr:"{thr} — تحقیق سے خطرے کی لکیر",
+  howT:"ہم اندر کے درجہ حرارت کا اندازہ کیسے لگاتے ہیں",
+  howB:"NightMaa آج رات کے اندر کے درجہ حرارت کا اندازہ باہر کے موسم کے ڈیٹا (Open-Meteo — لائیو پیش گوئی، یا ری پلے موڈ میں محفوظ شدہ ERA5 آرکائیو) اور گھر کے لیے آسان تبدیلیوں سے لگاتا ہے: ٹین یا ایسبیسٹوس کی چھت تقریباً +2.5°C، کنکریٹ کی چھت +1.5°C، کھپریل یا چھپر +0.5°C بڑھاتی ہے؛ اوپری منزل اور کم ہوا کا گزر کچھ اور بڑھاتے ہیں؛ کولر یا AC گھٹاتے ہیں۔ یہ تبدیلیاں ہندوستانی گھروں کی گرمی پر شائع شدہ تحقیق پر مبنی ہیں، جن میں سینسر مطالعات نے دکھایا کہ گھر رات کو سڑک کے مقابلے میں کئی درجے زیادہ گرم رہتے ہیں۔ یہ ایک شفاف اندازہ ہے، سینسر کی پیمائش نہیں — کسی گھر کا اصل درجہ حرارت مختلف ہو سکتا ہے۔ خطرے کی سطحیں عمل کے لیے رہنمائی ہیں، طبی تشخیص نہیں۔",
+  outTitle:"اگلی 3 راتیں", outSub:"آنے والی راتوں کے لیے وہی اندازہ، تاکہ خاندان — یا دورے کی منصوبہ بندی کرنے والی آشا ورکر — گرمی کی لہر پہلے سے دیکھ سکے۔",
+  planTitle:"آج رات کا منصوبہ", planSub:"آسان اقدامات جو واقعی کمرہ ٹھنڈا کرتے ہیں اور گرم رات میں حمل کی حفاظت کرتے ہیں۔",
+  ashaTitle:"آشا ورکرز کے لیے",
+  ashaB:"آپ کے معمول کے گھریلو دورے کے لیے بنایا گیا ایک منٹ کا جائزہ۔ کسی بھی فون پر یہ صفحہ کھولیں، ماں کے گاؤں یا شہر کو منتخب کریں، اس کے گھر کے بارے میں چار سوالوں کے جواب دیں — چھت، منزل، ہوا کا گزر، ٹھنڈک کا انتظام — اور آپ کو آج رات کے لیے اس گھر کی اندر کی گرمی کا خطرہ مل جائے گا، ایک آسان منصوبے کے ساتھ جسے آپ ایک منٹ میں سمجھا سکتی ہیں۔ نہ لاگ ان، نہ ایپ لگانا، نہ کوئی خرچ۔ جن ماؤں کے گھر گرم رات سے پہلے زیادہ یا بہت زیادہ خطرہ دکھائیں، اگلی صبح سب سے پہلے ان کے پاس جائیں اور خطرے کی علامات پر مشورہ دیں۔ یہی ایک منٹ کا جائزہ دنیا بھر کے فرنٹ لائن ورکرز کے لیے بنایا گیا ہے — کمیونٹی ہیلتھ ورکرز، دائیاں اور آنگن واڑی ورکرز کے لیے — آٹھ زبانوں میں۔ NightMaa آپ کے فیصلے میں مدد کے لیے گرمی کے خطرے کی معلومات دیتا ہے — یہ طبی تشخیص نہیں ہے۔",
+  evTitle:"یہ کیوں ضروری ہے — تحقیق", evSub:"NightMaa شائع شدہ ثبوتوں پر بنا ہے، اندازوں پر نہیں۔",
+  footDisc:"اہم: NightMaa خاندانوں اور فرنٹ لائن صحت کارکنوں کے فیصلوں میں مدد کے لیے گرمی کے خطرے کی معلومات دیتا ہے۔ یہ طبی تشخیص نہیں ہے، اور ڈاکٹر، نرس یا آشا ورکر کے مشورے کا متبادل نہیں ہے۔ اندر کے درجہ حرارت باہر کے موسم اور گھر کی قسم سے لگائے گئے اندازے ہیں — سینسر کی پیمائش نہیں۔",
+  footProto:"MIT Solve 2027 Global Climate Challenge کے لیے آکارش پانڈے (اندور، ہندوستان) کا بنایا گیا پروٹوٹائپ۔ موسم کا ڈیٹا: Open-Meteo پیش گوئی اور ERA5 آرکائیو (مفت، بغیر چابی کے)۔ استعمال مفت، کوئی لاگ ان نہیں، کسی بھی فون پر چلتا ہے — آٹھ زبانوں میں۔",
+  modeTitle:"3 · آج رات لائیو — یا کسی گرم رات کا ری پلے", modeSub:"ٹھنڈے موسم میں آج رات ہر جگہ محفوظ لگ سکتی ہے۔ ری پلے موڈ اسی اندازے کو کسی اصل ریکارڈ شدہ گرم رات پر چلاتا ہے، تاکہ آپ دیکھ سکیں کہ گرمی کی لہر میں اس گھر کا کیا حال ہوگا۔",
+  modeLive:"آج رات (لائیو)", modeReplay:"گرم رات کا ری پلے",
+  replaySub:"تصدیق شدہ گرم راتیں — کوئی ایک منتخب کریں، یا اوپر منتخب جگہ کے لیے کوئی بھی پچھلی تاریخ چنیں۔", replayDateL:"یا کوئی پچھلی تاریخ چنیں",
+  replayNote:"کسی اصل ریکارڈ شدہ رات کا ری پلے — Open-Meteo Archive کے ERA5 ڈیٹا سے۔",
+  loadingReplay:"اس رات کا ریکارڈ شدہ موسم لایا جا رہا ہے…",
+  riskKReplay:"اس رات اس گھر میں اندر کی گرمی کا خطرہ", outTitleReplay:"اس کے بعد کی 3 راتیں", outSubReplay:"ریکارڈ شدہ ڈیٹا سے، اس کے بعد کی راتوں کے لیے وہی اندازہ۔",
+  planTitleReplay:"اس رات کا منصوبہ — کیا مددگار ہے", tonightReplay:"وہ رات", placeReplay:"ریکارڈ شدہ رات کا اندازہ: {p} · {d}",
+  geoBtn:"📍 میری لوکیشن استعمال کریں", geoFail:"آپ کی لوکیشن نہیں مل سکی۔ براہ کرم لوکیشن کی اجازت دیں، یا اپنی جگہ تلاش کر کے منتخب کریں۔",
+  shareTitle:"آج رات کا منصوبہ شیئر کریں", shareSub:"آج رات کا خلاصہ ماں یا اس کے خاندان کو بھیجیں — جیسے آشا ورکر WhatsApp پر منصوبہ بھیجتی ہے۔",
+  shareCopy:"منصوبہ کاپی کریں", shareWa:"WhatsApp پر شیئر کریں", shareCopied:"منصوبہ کاپی ہو گیا — کہیں بھی پیسٹ کر سکتے ہیں۔",
+  shareMin:"اندازاً اندر سب سے ٹھنڈا", shareRisk:"خطرہ", shareHrs:"گھنٹے 32°C کی لکیر سے اوپر", shareActsT:"آج رات کے لیے:",
+  shareActs:["سورج غروب ہونے کے بعد آمنے سامنے کی کھڑکیاں اور دروازے کھولیں تاکہ ہوا کمرے کے آر پار بہے۔","بستر کے پاس پانی رکھیں اور جب بھی آنکھ کھلے پانی پئیں۔","سب سے ٹھنڈے کمرے میں، نیچے، ڈھیلے سوتی کپڑے پہن کر سوئیں۔"],
+  shareDisc:"NightMaa کی گرمی کے خطرے کی معلومات — طبی تشخیص نہیں۔ طبیعت ٹھیک نہ لگے تو آشا ورکر یا ڈاکٹر سے رابطہ کریں۔",
+  valTitle:"شائع شدہ پیمائشوں سے تصدیق", valSub:"NightMaa کا اندازہ چنئی کے گھروں میں سینسرز سے اصل میں ناپے گئے درجہ حرارت سے کس حد تک ملتا ہے۔",
+  valColStudy:"سینسرز سے ناپا گیا — چنئی مطالعہ (50 گھر)", valColEst:"NightMaa اندازہ — اسی طرح کا گھر",
+  valR1k:"رات میں اندر کا سب سے ٹھنڈا وقت", valR1s:"شاید ہی کبھی 31°C سے نیچے", valR1n:"≈34.6°C — گھر خطرے کے دائرے سے باہر ہی نہیں آتا",
+  valR2k:"شام کا سب سے گرم وقت، اندر", valR2s:"رات 8–9 بجے ≈34.7°C", valR2n:"رات 8 بجے ≈36.8°C",
+  valR3k:"اندر 32°C سے اوپر کا وقت", valR3s:"اکثر 32°C سے اوپر؛ سب سے برے گھروں میں 5,700–5,800 گھنٹے 32°C سے اوپر", valR3n:"رات کی پوری 14 گھنٹے کی مدت 32°C سے اوپر",
+  valNote:"اسے ایمانداری سے پڑھیں: مطالعے میں اصل گھروں کے اندر سینسرز لگائے گئے تھے (اکتوبر 2025 – اپریل 2026، شدید گرمی نہیں)۔ NightMaa والا کالم ایک ریکارڈ شدہ شدید گرمی کی رات (چنئی، 20 مئی 2026، ٹین کی چھت + کم ہوا کا گزر) کے باہر کے موسم سے لگایا گیا اندازہ ہے، جب باہر کا درجہ حرارت خود 31.4°C سے نیچے نہیں گیا — مطالعے کی مدت سے زیادہ گرم رات، اس لیے اندازہ بھی زیادہ گرم ہے۔ جو بات ملتی ہے، وہی اہم ہے: اس طرح کا گھر رات کو خطرے کے دائرے سے نیچے ٹھنڈا نہیں ہوتا اور پوری رات 32°C سے اوپر رہتا ہے۔ ہر گھر کے اصل اعداد مختلف ہوں گے — اسی لیے ہمارا اگلا قدم اصل گھروں کے اندر کم لاگت والے ESP32 درجہ حرارت لاگرز لگا کر اس ماڈل کی تصدیق کرنا ہے۔",
+  valBtn:"اس رات کا ری پلے دیکھیں — چنئی، ٹین کی چھت، کم ہوا کا گزر",
+  tonight:"آج رات", minIn:"اندر سب سے ٹھنڈا", hrsAbove:"گھنٹے {thr} سے اوپر", humLine:"آج رات باہر کی نمی: {a}–{b}%۔ زیادہ نمی میں گرمی جسم پر اور بھاری پڑتی ہے۔",
+  placeNow:"آج رات کا اندازہ: {p}",
+  riskNames:{low:"کم", mod:"درمیانہ", high:"زیادہ", vhigh:"بہت زیادہ"},
+  riskLine:"آج شام اندر کا درجہ حرارت {peak} تک رہ سکتا ہے اور رات میں صرف {min} تک ہی ٹھنڈا ہوگا۔",
+  intro:{
+    low:"آج رات اس گھر میں نسبتاً حفاظت لگتی ہے۔ پھر بھی نیچے دیے گئے بنیادی مشورے اپنائیں — گھر کے اندر کی گرمی تیزی سے بڑھ سکتی ہے، اور حمل میں جسم پر گرمی کا بوجھ زیادہ پڑتا ہے۔",
+    mod:"آج رات گھر کے اندر گرمی محسوس ہوگی۔ نیچے دیا گیا منصوبہ اپنائیں، اور رات بھر اپنے جسم کے اشاروں پر دھیان دیں۔",
+    high:"آج رات کی اندر کی گرمی حمل میں واقعی خطرناک ہے۔ براہ کرم نیچے کا منصوبہ دھیان سے اپنائیں اور سب سے ٹھنڈے کمرے میں سوئیں۔",
+    vhigh:"آج رات کی اندر کی گرمی حمل میں خطرناک ہے۔ نیچے کا منصوبہ اپنائیں، ہو سکے تو سب سے ٹھنڈی جگہ سوئیں — ضرورت پڑے تو کسی رشتہ دار یا پڑوسی کے ٹھنڈے کمرے میں — اور آج ہی اپنی آشا ورکر سے بات کریں۔"
+  },
+  advTitles:["آج رات کمرہ ٹھنڈا رکھیں","پانی — پیتے رہیں","سونے کی تیاری","آرام اور کل کا دن"],
+  adv:[
+    ["سورج غروب ہونے کے بعد، جب باہر کی ہوا کمرے سے ٹھنڈی ہو جائے، تو آمنے سامنے کی کھڑکیاں اور دروازے کھول دیں تاکہ ہوا آر پار بہے۔",
+     "شام کو چھت اور فرش پر پانی چھڑکیں — سوکھتے وقت پانی گرمی کو ساتھ لے جاتا ہے۔ یہ ٹین اور کنکریٹ کی چھتوں پر سب سے زیادہ کام کرتا ہے۔",
+     "پنکھے کے سامنے یا کھڑکی کی ہوا میں گیلی سوتی چادر یا بھیگا کپڑا ٹانگیں — بھاپ بننے سے ہوا ٹھنڈی ہوتی ہے۔",
+     "کولر ہو تو شام کو (تقریباً 8–10 بجے) ضرور چلائیں، جب اندر کی گرمی عام طور پر سب سے زیادہ ہوتی ہے۔",
+     "کل کے لیے: تیز دوپہر (12–4 بجے) کھڑکیاں اور پردے بند رکھیں تاکہ کم گرمی اندر آئے۔"],
+    ["بستر کے پاس پانی کی بھری بوتل یا مٹکا رکھیں۔ رات میں جب بھی آنکھ کھلے، پانی پئیں — تیز پیاس لگنے کا انتظار نہ کریں۔",
+     "دن بھر میں 8–10 گلاس پانی پئیں۔ بہت پسینہ آیا ہو تو پانی میں ایک چٹکی نمک اور چینی (گھر کے ORS جیسا) مدد کرتا ہے — جب تک ڈاکٹر نے نمک یا پانی پر روک نہ لگائی ہو۔",
+     "شام کو دیر سے چائے یا کافی نہ لیں — ان سے پیشاب زیادہ آتا ہے اور جسم کا پانی گھٹتا ہے۔"],
+    ["ڈھیلے سوتی کپڑے پہنیں، اور کمبل کی جگہ ہلکی سوتی چادر لیں۔",
+     "نیچے سوئیں — فرش پر یا سب سے نیچے کی کھاٹ پر — کیونکہ ٹھنڈی ہوا فرش کے پاس رہتی ہے۔ فوم کے بجائے سوتی گدا یا چٹائی ٹھنڈی لگتی ہے۔",
+     "سونے سے پہلے ٹھنڈے پانی سے ہاتھ پاؤں اور منہ دھوئیں، یا اسفنج کریں — اس سے نیند جلدی آتی ہے۔",
+     "اگر سونے کا کمرہ سب سے گرم کمرہ ہے، تو آج رات سب سے ٹھنڈے کمرے میں سوئیں — مچھر دانی کے ساتھ برآمدہ بھی گرم بند کمرے سے محفوظ ہو سکتا ہے۔"],
+    ["کل تیز گرمی کے اوقات (12–4 بجے) میں بھاری کام نہ کریں؛ سائے میں آرام کریں، اور طبیعت ٹھیک نہ لگے تو آج رات ہی خاندان کو بتا دیں۔",
+     "اگر آج رات بہت گرم ہے، تو کل کے آرام کا منصوبہ ابھی بنائیں — مسلسل کئی گرم راتوں میں گرمی کا بوجھ بڑھتا جاتا ہے۔"]
+  ],
+  dangerT:"⚠ خطرے کی علامات — فوراً مدد لیں",
+  dangerB:"چکر آنا یا بے ہوش ہونا · بچے کی حرکت معمول سے بہت کم ہونا · تیز سر درد · چہرے یا ہاتھوں پر اچانک سوجن · الٹی، یا پانی بھی نہ رکنا · بخار، درد (سکڑن) یا پانی کا رساؤ۔ → فوراً اپنی آشا ورکر یا ڈاکٹر سے رابطہ کریں، یا قریبی اسپتال جائیں۔"
+};
+STR.ar = {
+  tagline:"حماية الأمهات الحوامل من حرارة الليل داخل المنازل. كل تنبيهات الحرارة تتحدث عن فترة ما بعد الظهر في الخارج — لكن الحرارة الخطيرة تكون داخل المنزل، ليلاً. يقدّر NightMaa ذلك قبل أن تبدأ الليلة.",
+  locTitle:"1 · مكانك", locSub:"انقر على مدينة، أو استخدم موقعك، أو ابحث عن أي مدينة في العالم. يستخدم NightMaa توقعات الطقس المباشرة لذلك المكان.",
+  searchPh:"ابحث عن أي مدينة في العالم…", searchBtn:"بحث",
+  homeTitle:"2 · كيف هي المنزل", homeSub:"أربعة أسئلة سريعة عن المنزل. كل منزل يحتفظ بحرارة النهار بشكل مختلف تماماً — سقف من الصفيح وغرفة باردة جيدة التهوية عالمان مختلفان في منتصف الليل.",
+  roofL:"نوع السقف", floorL:"الطابق", ventL:"التهوية", coolL:"وسيلة التبريد المتاحة",
+  loading:"جارٍ تحميل توقعات هذه الليلة…",
+  errLoad:"تعذّر تحميل توقعات الطقس. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.", retry:"حاول مرة أخرى",
+  errSearch:"لم يتم العثور على مكان بهذا الاسم. جرّب إملاءً آخر.", errSearchNet:"فشل البحث — يرجى التحقق من الاتصال والمحاولة مرة أخرى.",
+  riskK:"خطر حرارة الأماكن المغلقة هذه الليلة في هذا المنزل",
+  disclaimerShort:"⚠ هذه معلومات عن خطر الحرارة لدعم قراراتك — وليست تشخيصاً طبياً. إذا شعرتِ بسوء، اتصلي بعاملة ASHA أو طبيبك.",
+  stMinK:"الأبرد داخلاً هذه الليلة", stPeakK:"ذروة المساء داخلاً", stHoursK:"ساعات فوق {thr} داخلاً", stOutK:"الأبرد خارجاً هذه الليلة",
+  lgIn:"تقدير الداخل", lgOut:"الخارج (التوقعات)", lgThr:"{thr} — خط الخطر من الأبحاث",
+  howT:"كيف نقدّر درجة الحرارة الداخلية",
+  howB:"يقدّر NightMaa درجة الحرارة الداخلية لهذه الليلة من بيانات الطقس الخارجي (Open-Meteo — التوقعات المباشرة، أو أرشيف ERA5 المسجل في وضع الإعادة) مع تعديلات بسيطة حسب المنزل: سقف الصفيح أو الأسبستوس يضيف نحو +2.5°م، والبلاطة الخرسانية +1.5°م، والقرميد أو القش +0.5°م؛ والطوابق العليا وسوء التهوية تضيف قليلاً أكثر؛ والمبرّد أو المكيّف يطرح. تستند هذه التعديلات إلى أبحاث منشورة حول حرارة المساكن في الهند، بما فيها دراسات بأجهزة استشعار أظهرت أن المنازل تبقى أدفأ بعدة درجات من الشارع ليلاً. هذا تقدير شفاف، وليس قياساً بمستشعر — فستختلف درجة الحرارة الحقيقية في كل منزل. مستويات الخطر دليل للتصرف، وليست تشخيصاً طبياً.",
+  outTitle:"الليالي الثلاث القادمة", outSub:"نفس التقدير لليالي القادمة، حتى ترى الأسرة — أو عاملة ASHA التي تخطط للزيارات — موجة الحر قادمة.",
+  planTitle:"خطة هذه الليلة", planSub:"خطوات بسيطة تبرّد الغرفة فعلاً وتحمي الحمل في ليلة حارة.",
+  ashaTitle:"لعاملات ASHA",
+  ashaB:"فحص يستغرق دقيقة واحدة، مصمم للزيارة المنزلية التي تقومين بها أصلاً. افتحي هذه الصفحة على أي هاتف، وانقري على قرية الأم أو مدينتها، وأجيبي عن أربعة أسئلة عن منزلها — السقف، الطابق، التهوية، التبريد — وستظهر لك مخاطر حرارة الأماكن المغلقة لهذه الليلة في ذلك المنزل، مع خطة بسيطة يمكنك شرحها في دقيقة. لا تسجيل دخول، لا تثبيت تطبيق، لا تكلفة. الأمهات اللواتي تُظهر منازلهن خطراً مرتفعاً أو مرتفعاً جداً قبل ليلة حارة هنّ أولى بالزيارة في صباح اليوم التالي، وبإرشادهن حول علامات الخطر. صُمم الفحص ذاته الذي يستغرق دقيقة للعاملين في الخطوط الأمامية في كل مكان — العاملين الصحيين المجتمعيين والقابلات وعاملات أنغانوادي — بثماني لغات. يقدّم NightMaa معلومات عن خطر الحرارة لدعم حكمك — وليس تشخيصاً طبياً.",
+  evTitle:"لماذا هذا مهم — الأبحاث", evSub:"بُني NightMaa على أدلة منشورة، لا على التخمين.",
+  footDisc:"مهم: يقدّم NightMaa معلومات عن خطر الحرارة لدعم قرارات الأسر والعاملين الصحيين في الخطوط الأمامية. وهو ليس تشخيصاً طبياً، ولا يحل محل مشورة الطبيب أو الممرضة أو عاملة ASHA. درجات الحرارة الداخلية تقديرات من الطقس الخارجي ونوع المنزل — وليست قراءات مستشعرات.",
+  footProto:"نموذج أولي بُني لتحدي MIT Solve 2027 للمناخ العالمي من قبل أكارش باندي (إندور، الهند). بيانات الطقس: توقعات Open-Meteo وأرشيف ERA5 (مجاني، بدون مفتاح). مجاني الاستخدام، بدون تسجيل دخول، يعمل على أي هاتف — بثماني لغات.",
+  modeTitle:"3 · هذه الليلة مباشرة — أو إعادة لليلة حارة", modeSub:"في الموسم البارد قد تبدو هذه الليلة آمنة في كل مكان. يطبّق وضع الإعادة نفس التقدير على ليلة حارة حقيقية مسجلة، لترى ما سيواجهه هذا المنزل في موجة حر.",
+  modeLive:"هذه الليلة (مباشر)", modeReplay:"إعادة ليلة حارة",
+  replaySub:"ليالٍ حارة تم التحقق منها — اختر واحدة، أو اختر أي تاريخ سابق للمكان المحدد أعلاه.", replayDateL:"أو اختر أي تاريخ سابق",
+  replayNote:"إعادة لليلة حقيقية مسجلة — بيانات ERA5 عبر أرشيف Open-Meteo.",
+  loadingReplay:"جارٍ تحميل الطقس المسجل لتلك الليلة…",
+  riskKReplay:"خطر حرارة الأماكن المغلقة في تلك الليلة في هذا المنزل", outTitleReplay:"الليالي الثلاث التالية", outSubReplay:"نفس التقدير لليالي التالية، من البيانات المسجلة.",
+  planTitleReplay:"خطة تلك الليلة — ما يساعد", tonightReplay:"تلك الليلة", placeReplay:"تقدير الليلة المسجلة: {p} · {d}",
+  geoBtn:"📍 استخدم موقعي", geoFail:"تعذّر الحصول على موقعك. يرجى السماح بالوصول إلى الموقع، أو ابحث عن مكانك واختره.",
+  shareTitle:"شارك خطة هذه الليلة", shareSub:"أرسل ملخص هذه الليلة إلى الأم أو أسرتها — مثلما ترسل عاملة ASHA الخطة عبر WhatsApp.",
+  shareCopy:"نسخ الخطة", shareWa:"المشاركة عبر WhatsApp", shareCopied:"تم نسخ الخطة — يمكنك لصقها في أي مكان.",
+  shareMin:"تقدير الأبرد داخلاً", shareRisk:"الخطر", shareHrs:"ساعات فوق خط 32°م", shareActsT:"لهذه الليلة:",
+  shareActs:["افتح النوافذ والأبواب المتقابلة بعد غروب الشمس ليعبر الهواء الغرفة.","ضع الماء بجانب السرير واشرب كلما استيقظت.","نَم في الأسفل، في أبرد غرفة، بملابس قطنية فضفاضة."],
+  shareDisc:"معلومات NightMaa عن خطر الحرارة — ليست تشخيصاً طبياً. إذا شعرت بسوء، اتصل بعاملة ASHA أو طبيب.",
+  valTitle:"تم التحقق منه مقابل قياسات منشورة", valSub:"كيف يقارن تقدير NightMaa بما قاسته أجهزة الاستشعار فعلياً في منازل تشيناي.",
+  valColStudy:"مقاس بالمستشعرات — دراسة تشيناي (50 منزلاً)", valColEst:"تقدير NightMaa — نفس نوع المنزل",
+  valR1k:"أبرد وقت في الليل، داخلاً", valR1s:"نادراً ما ينخفض عن 31°م", valR1n:"≈34.6°م — المنزل لا يخرج أبداً من منطقة الخطر",
+  valR2k:"ذروة المساء، داخلاً", valR2s:"≈34.7°م نحو 8–9 مساءً", valR2n:"≈36.8°م عند 8 مساءً",
+  valR3k:"الوقت فوق 32°م داخلاً", valR3s:"غالباً فوق 32°م؛ وأسوأ المنازل 5,700–5,800 ساعة فوق 32°م", valR3n:"طوال الـ14 ساعة من الليل فوق 32°م",
+  valNote:"اقرأ هذا بصدق: وضعت الدراسة مستشعرات داخل منازل حقيقية (أكتوبر 2025 – أبريل 2026، وليس ذروة الصيف). عمود NightMaa تقدير من الطقس الخارجي لليلة مسجلة في ذروة الصيف (تشيناي، 20 مايو 2026، سقف صفيح + تهوية ضعيفة)، حين لم تنخفض حرارة الخارج نفسها عن 31.4°م — ليلة أحرّ من فترة الدراسة، لذا فإن التقدير أحرّ أيضاً. ما يتفق هو النمط المهم: هذا النوع من المنازل لا يبرد تحت منطقة الخطر ليلاً ويقضي الليل كله فوق 32°م. ستختلف الأرقام الدقيقة من منزل لآخر — ولهذا خطوتنا التالية هي التحقق بمسجلات حرارة ESP32 منخفضة التكلفة داخل منازل حقيقية.",
+  valBtn:"أعد تشغيل هذه الليلة — تشيناي، سقف صفيح، تهوية ضعيفة",
+  tonight:"هذه الليلة", minIn:"الأبرد داخلاً", hrsAbove:"ساعات فوق {thr}", humLine:"رطوبة الخارج هذه الليلة: {a}–{b}%. الرطوبة العالية تجعل الحرارة أثقل على الجسم.",
+  placeNow:"تقدير هذه الليلة: {p}",
+  riskNames:{low:"منخفض", mod:"متوسط", high:"مرتفع", vhigh:"مرتفع جداً"},
+  riskLine:"قد يبقى الداخل دافئاً حتى {peak} هذا المساء ولا يبرد إلا إلى {min} هذه الليلة.",
+  intro:{
+    low:"تبدو هذه الليلة آمنة نسبياً في هذا المنزل. مع ذلك اتبع النصائح الأساسية أدناه — فقد ترتفع حرارة الداخل بسرعة، والحمل يجعل الجسم يعمل بجهد أكبر في الحرارة.",
+    mod:"ستشعر بالحرارة داخلاً هذه الليلة. اتبع الخطة أدناه، وانتبه لإشارات جسمك طوال الليل.",
+    high:"حرارة الداخل هذه الليلة خطر حقيقي أثناء الحمل. يرجى اتباع الخطة أدناه بعناية والنوم في أبرد غرفة لديك.",
+    vhigh:"حرارة الداخل هذه الليلة خطيرة أثناء الحمل. اتبع الخطة أدناه، وحاول النوم في أبرد مكان متاح — حتى غرفة أبرد لدى قريب أو جار إن أمكن — وتحدث اليوم إلى عاملة ASHA."
+  },
+  advTitles:["برّد الغرفة هذه الليلة","الماء — واصل الشرب","التجهيز للنوم","الراحة وغداً"],
+  adv:[
+    ["بعد غروب الشمس، عندما يصبح هواء الخارج أبرد من الغرفة، افتح النوافذ والأبواب على الجهات المتقابلة ليعبر الهواء الغرفة.",
+     "في المساء، رشّ الماء على السقف والأرضية — فعندما يجف يحمل الحرارة معه. يعمل هذا بشكل أفضل مع أسقف الصفيح والخرسانة.",
+     "علّق ملاءة قطنية مبللة أو قطعة قماش مبللة أمام المروحة، أو في نسيم النافذة — التبخر يبرّد الهواء.",
+     "إذا كان لديك مبرّد، شغّله في المساء (نحو 8–10 مساءً)، عندما تكون حرارة الداخل عادة في أعلى مستوياتها.",
+     "لغد: أبقِ النوافذ والستائر مغلقة خلال فترة الظهيرة الحارة (12–4 مساءً) ليدخل حرارة أقل."],
+    ["ضع زجاجة ماء ممتلئة أو جرة بجانب السرير. اشرب كلما استيقظت — لا تنتظر حتى تشعر بعطش شديد.",
+     "اهدف إلى 8–10 أكواب ماء خلال النهار. إذا تعرّقت كثيراً، فإن رشة ملح وسكر في الماء (مثل محلول الإماهة المنزلي) تساعد — ما لم يقيّد طبيبك الملح أو السوائل.",
+     "تجنّب الشاي والقهوة في وقت متأخر من المساء — فهما يزيدان التبول ويفقدان الجسم الماء."],
+    ["ارتدِ ملابس قطنية فضفاضة، واستخدم ملاءة قطنية خفيفة بدلاً من البطانية.",
+     "نَم في الأسفل — على الأرض أو على أدنى سرير — لأن الهواء البارد يبقى قرب الأرض. الفراش القطني أو الحصيرة أبرد من الإسفنج.",
+     "اغسل يديك وقدميك ووجهك بماء بارد، أو خذ حماماً سريعاً بالإسفنجة قبل النوم — يساعدك على النوم.",
+     "إذا كانت غرفة النوم هي أحرّ غرفة، فنَم هذه الليلة في أبرد غرفة — الشرفة مع ناموسية قد تكون أكثر أماناً من غرفة حارة مغلقة."],
+    ["تجنّب العمل الشاق في أحرّ ساعات الغد (12–4 مساءً)؛ استرح في الظل وأخبر أسرتك هذه الليلة إذا شعرت بسوء.",
+     "إذا كانت هذه الليلة حارة جداً، خطط لراحة الغد الآن — فإجهاد الحرارة يتراكم عبر عدة ليالٍ حارة متتالية."]
+  ],
+  dangerT:"⚠ علامات الخطر — اطلب المساعدة فوراً",
+  dangerB:"دوخة أو إغماء · حركة الجنين أقل بكثير من المعتاد · صداع شديد · تورّم مفاجئ في الوجه أو اليدين · قيء، أو عدم القدرة على الاحتفاظ بالماء · حمى، أو انقباضات، أو تسرّب سائل. → اتصل فوراً بعاملة ASHA أو طبيبك، أو اذهب إلى أقرب مستشفى."
+};
+
 /* ============ Select options ============ */
 var SELECT_DEFS = {
   roof:{off:{tin:2.5, concrete:1.5, tile:0.5}, en:[["tin","Tin / asbestos sheet roof"],["concrete","Concrete slab roof (RCC)"],["tile","Tile / thatch roof"]], hi:[["tin","टिन / एस्बेस्टस की छत"],["concrete","कंक्रीट की छत (RCC)"],["tile","खपरैल / छप्पर की छत"]]},
@@ -343,6 +886,31 @@ var SELECT_DEFS = {
   cool:{off:{none:0, fan:-0.3, cooler:-2, ac:-4}, en:[["none","No fan or cooler"],["fan","Fan only"],["cooler","Cooler / evaporative"],["ac","Air conditioner"]], hi:[["none","न पंखा, न कूलर"],["fan","केवल पंखा"],["cooler","कूलर"],["ac","एयर कंडीशनर (AC)"]]}
 };
 var DEFAULTS = {roof:"concrete", floor:"ground", vent:"moderate", cool:"fan"};
+/* v2: select labels for the additional languages */
+SELECT_DEFS.roof.bn=[["tin","টিন / অ্যাসবেস্টস শিটের ছাদ"],["concrete","কংক্রিটের ছাদ (RCC)"],["tile","টালি / খড়ের ছাদ"]];
+SELECT_DEFS.floor.bn=[["ground","নিচতলা"],["first","দোতলা (প্রথম তলা)"],["second","তিনতলা বা তার উপরে"]];
+SELECT_DEFS.vent.bn=[["poor","কম — ছোট বা কম জানালা"],["moderate","মাঝারি"],["good","ভালো — দুই দিক দিয়ে বাতাস"]];
+SELECT_DEFS.cool.bn=[["none","পাখা বা কুলার নেই"],["fan","শুধু পাখা"],["cooler","কুলার"],["ac","এয়ার কন্ডিশনার (AC)"]];
+SELECT_DEFS.roof.es=[["tin","Techo de chapa / amianto"],["concrete","Techo de losa de hormigón"],["tile","Techo de teja / paja"]];
+SELECT_DEFS.floor.es=[["ground","Planta baja"],["first","Primera planta"],["second","Segunda planta o superior"]];
+SELECT_DEFS.vent.es=[["poor","Mala: ventanas pocas o pequeñas"],["moderate","Moderada"],["good","Buena: ventilación cruzada"]];
+SELECT_DEFS.cool.es=[["none","Sin ventilador ni enfriador"],["fan","Solo ventilador"],["cooler","Enfriador evaporativo"],["ac","Aire acondicionado"]];
+SELECT_DEFS.roof.fr=[["tin","Toit en tôle / amiante"],["concrete","Toit en dalle de béton"],["tile","Toit en tuile / chaume"]];
+SELECT_DEFS.floor.fr=[["ground","Rez-de-chaussée"],["first","Premier étage"],["second","Deuxième étage ou plus"]];
+SELECT_DEFS.vent.fr=[["poor","Mauvaise — fenêtres rares ou petites"],["moderate","Moyenne"],["good","Bonne — ventilation traversante"]];
+SELECT_DEFS.cool.fr=[["none","Ni ventilateur ni rafraîchisseur"],["fan","Ventilateur seul"],["cooler","Rafraîchisseur évaporatif"],["ac","Climatisation"]];
+SELECT_DEFS.roof.pt=[["tin","Telhado de zinco / amianto"],["concrete","Telhado de laje de betão"],["tile","Telhado de telha / palha"]];
+SELECT_DEFS.floor.pt=[["ground","Rés-do-chão"],["first","Primeiro andar"],["second","Segundo andar ou acima"]];
+SELECT_DEFS.vent.pt=[["poor","Má — janelas poucas ou pequenas"],["moderate","Moderada"],["good","Boa — ventilação cruzada"]];
+SELECT_DEFS.cool.pt=[["none","Sem ventoinha nem climatizador"],["fan","Só ventoinha"],["cooler","Climatizador evaporativo"],["ac","Ar condicionado"]];
+SELECT_DEFS.roof.ur=[["tin","ٹین / ایسبیسٹوس کی چھت"],["concrete","کنکریٹ کی چھت (RCC)"],["tile","کھپریل / چھپر کی چھت"]];
+SELECT_DEFS.floor.ur=[["ground","نچلی منزل (گراؤنڈ فلور)"],["first","پہلی منزل"],["second","دوسری منزل یا اوپر"]];
+SELECT_DEFS.vent.ur=[["poor","کم — چھوٹی یا کم کھڑکیاں"],["moderate","درمیانہ"],["good","اچھی — آر پار ہوا"]];
+SELECT_DEFS.cool.ur=[["none","نہ پنکھا، نہ کولر"],["fan","صرف پنکھا"],["cooler","کولر"],["ac","ایئر کنڈیشنر (AC)"]];
+SELECT_DEFS.roof.ar=[["tin","سقف صفيح / أسبستوس"],["concrete","سقف بلاطة خرسانية"],["tile","سقف قرميد / قش"]];
+SELECT_DEFS.floor.ar=[["ground","الطابق الأرضي"],["first","الطابق الأول"],["second","الطابق الثاني أو أعلى"]];
+SELECT_DEFS.vent.ar=[["poor","ضعيفة — نوافذ قليلة أو صغيرة"],["moderate","متوسطة"],["good","جيدة — تهوية متقاطعة"]];
+SELECT_DEFS.cool.ar=[["none","لا مروحة ولا مبرّد"],["fan","مروحة فقط"],["cooler","مبرّد تبخيري"],["ac","مكيّف هواء"]];
 
 var PRESETS = [
   {name:"Indore", admin:"Madhya Pradesh", lat:22.7196, lon:75.8577},
@@ -350,11 +918,28 @@ var PRESETS = [
   {name:"Delhi", admin:"Delhi", lat:28.6139, lon:77.2090},
   {name:"Ahmedabad", admin:"Gujarat", lat:23.0225, lon:72.5714},
   {name:"Nagpur", admin:"Maharashtra", lat:21.1458, lon:79.0882},
-  {name:"Patna", admin:"Bihar", lat:25.5941, lon:85.1376}
+  {name:"Patna", admin:"Bihar", lat:25.5941, lon:85.1376},
+  {name:"Dhaka", admin:"Bangladesh", lat:23.8103, lon:90.4125},
+  {name:"Karachi", admin:"Pakistan", lat:24.8608, lon:67.0011},
+  {name:"Lagos", admin:"Nigeria", lat:6.5244, lon:3.3792},
+  {name:"Phoenix", admin:"USA", lat:33.4484, lon:-112.0740}
 ];
 
 /* ============ State ============ */
 var lang = "en";
+var unit = "C"; /* "C" | "F" — display only; all risk math stays in °C */
+var mode = "live"; /* "live" | "replay" */
+var replayDate = "2026-05-20";
+var lastView = null; /* {st, risk, tDate} from the latest render, for sharing */
+/* Verified hot nights (ERA5, checked against the Archive API):
+   Chennai 2026-05-20 outdoor night min 31.4°C · Delhi 2025-06-11 min 31.1°C ·
+   Karachi 2025-05-29 min 30.0°C · Phoenix 2025-07-09 min 33.9°C */
+var REPLAY_PRESETS = [
+  {name:"Chennai", admin:"Tamil Nadu", lat:13.0827, lon:80.2707, date:"2026-05-20"},
+  {name:"Delhi", admin:"Delhi", lat:28.6139, lon:77.2090, date:"2025-06-11"},
+  {name:"Karachi", admin:"Sindh, Pakistan", lat:24.8608, lon:67.0011, date:"2025-05-29"},
+  {name:"Phoenix", admin:"Arizona, USA", lat:33.4484, lon:-112.0740, date:"2025-07-09"}
+];
 var place = PRESETS[0];
 var wx = null; /* forecast response */
 var hourIdx = {}; /* "YYYY-MM-DDTHH" -> index */
@@ -362,7 +947,8 @@ var hourIdx = {}; /* "YYYY-MM-DDTHH" -> index */
 function $(id){ return document.getElementById(id); }
 function S(k){ return STR[lang][k]; }
 function pad(n){ return (n<10?"0":"")+n; }
-function fmtT(v){ return (Math.round(v*10)/10).toFixed(1)+"°C"; }
+function fmtT(v){ var x = (unit==="F") ? (v*9/5+32) : v; return (Math.round(x*10)/10).toFixed(1)+(unit==="F" ? "°F" : "°C"); }
+function fmtAxis(v){ return (unit==="F" ? Math.round(v*9/5+32) : v)+"°"; }
 function hourLabel(h){ var hh=h%12; if(hh===0) hh=12; return hh+(h<12||h===24?" AM":" PM"); }
 function hourLabelShort(h){ var hh=h%12; if(hh===0) hh=12; return hh+(h<12?"a":"p"); }
 
@@ -407,6 +993,7 @@ function tonightDateStr(){
   if (nl.getUTCHours() < 7) ds = addDays(ds, -1);
   return ds;
 }
+function activeNightDate(){ return mode==="replay" ? replayDate : tonightDateStr(); }
 function nightIndices(dateStr){
   var start = hourIdx[dateStr+"T18"];
   var pts = [];
@@ -428,18 +1015,21 @@ function nightIndices(dateStr){
   return pts;
 }
 function nightStats(pts, p){
-  var out=[], inn=[];
+  var out=[], inn=[], used=[];
   for (var j=0;j<pts.length;j++){
     var o = wx.hourly.temperature_2m[pts[j]];
-    out.push(o); inn.push(estimateIndoor(o, p));
+    if (o === null || o === undefined) continue; /* archive gaps */
+    used.push(pts[j]); out.push(o); inn.push(estimateIndoor(o, p));
   }
+  pts = used;
+  if (!inn.length) return {pts:[], out:[], inn:[], minIn:0, maxIn:0, minOut:0, above:0, peakHour:0, humMin:1e9, humMax:-1e9};
   var minIn = Math.min.apply(null, inn), maxIn = Math.max.apply(null, inn), minOut = Math.min.apply(null, out);
   var above = 0, peakAt = 0, humMin = 1e9, humMax = -1e9;
   for (var q=0;q<inn.length;q++){
     if (inn[q] > 32) above++;
     if (inn[q] === maxIn) peakAt = q;
     var h = wx.hourly.relative_humidity_2m[pts[q]];
-    if (h<humMin) humMin=h; if (h>humMax) humMax=h;
+    if (h !== null && h !== undefined){ if (h<humMin) humMin=h; if (h>humMax) humMax=h; }
   }
   return {pts:pts, out:out, inn:inn, minIn:minIn, maxIn:maxIn, minOut:minOut, above:above,
           peakHour:parseInt(wx.hourly.time[pts[peakAt]].slice(11,13),10), humMin:humMin, humMax:humMax};
@@ -463,12 +1053,12 @@ function buildChart(st){
   /* gridlines every 2 degrees */
   for (var g = Math.ceil(lo/2)*2; g <= hi; g += 2){
     s += '<line x1="'+L+'" y1="'+Y(g)+'" x2="'+(W-R)+'" y2="'+Y(g)+'" stroke="#EDE3D2" stroke-width="1"/>';
-    s += '<text x="'+(L-6)+'" y="'+(Y(g)+4)+'" font-size="11" fill="#7A6A5B" text-anchor="end">'+g+'°</text>';
+    s += '<text x="'+(L-6)+'" y="'+(Y(g)+4)+'" font-size="11" fill="#7A6A5B" text-anchor="end">'+fmtAxis(g)+'</text>';
   }
   /* 32°C danger line */
   if (32 >= lo && 32 <= hi){
     s += '<line x1="'+L+'" y1="'+Y(32)+'" x2="'+(W-R)+'" y2="'+Y(32)+'" stroke="#A92F22" stroke-width="1.6" stroke-dasharray="6 4"/>';
-    s += '<text x="'+(W-R)+'" y="'+(Y(32)-5)+'" font-size="11" fill="#A92F22" text-anchor="end" font-weight="600">32°C</text>';
+    s += '<text x="'+(W-R)+'" y="'+(Y(32)-5)+'" font-size="11" fill="#A92F22" text-anchor="end" font-weight="600">'+fmtT(32)+'</text>';
   }
   function line(vals, color, width, dash){
     var ptsStr = "";
@@ -518,10 +1108,18 @@ function buildChips(){
 function render(){
   if (!wx) return;
   var p = profile();
-  var tDate = tonightDateStr();
+  var tDate = activeNightDate();
   var st = nightStats(nightIndices(tDate), p);
   if (!st.pts.length){ showError(); return; }
   var risk = riskOf(st);
+  lastView = {st:st, risk:risk, tDate:tDate};
+  /* mode-dependent headings */
+  document.querySelector('[data-i18n="riskK"]').textContent = (mode==="replay" ? S("riskKReplay") : S("riskK"));
+  document.querySelector('[data-i18n="outTitle"]').textContent = (mode==="replay" ? S("outTitleReplay") : S("outTitle"));
+  document.querySelector('[data-i18n="outSub"]').textContent = (mode==="replay" ? S("outSubReplay") : S("outSub"));
+  document.querySelector('[data-i18n="planTitle"]').textContent = (mode==="replay" ? S("planTitleReplay") : S("planTitle"));
+  document.querySelector('[data-i18n="stHoursK"]').textContent = S("stHoursK").replace("{thr}", fmtT(32));
+  document.querySelector('[data-i18n="lgThr"]').textContent = S("lgThr").replace("{thr}", fmtT(32));
   $("results").classList.remove("hidden");
   /* risk banner */
   var banner = $("riskBanner");
@@ -533,7 +1131,7 @@ function render(){
   $("stPeak").textContent = fmtT(st.maxIn);
   $("stHours").textContent = st.above + "";
   $("stOut").textContent = fmtT(st.minOut);
-  $("humLine").textContent = S("humLine").replace("{a}", Math.round(st.humMin)).replace("{b}", Math.round(st.humMax));
+  $("humLine").textContent = (st.humMin < 1e8) ? S("humLine").replace("{a}", Math.round(st.humMin)).replace("{b}", Math.round(st.humMax)) : "";
   /* chart */
   $("chart").innerHTML = buildChart(st);
   /* outlook */
@@ -544,9 +1142,9 @@ function render(){
     if (!npts.length) continue;
     var nst = nightStats(npts, p);
     var nr = riskOf(nst);
-    nightsHtml += '<div class="night"><div class="d">'+(n===0 ? S("tonight")+" · " : "")+dateLabel(ds)+'</div>'+
+    nightsHtml += '<div class="night"><div class="d">'+(n===0 ? (mode==="replay" ? S("tonightReplay") : S("tonight"))+" · " : "")+dateLabel(ds)+'</div>'+
       '<div class="m">'+fmtT(nst.minIn)+'</div>'+
-      '<div class="h">'+S("minIn")+' · '+nst.above+' '+S("hrsAbove")+'</div>'+
+      '<div class="h">'+S("minIn")+' · '+nst.above+' '+S("hrsAbove").replace("{thr}", fmtT(32))+'</div>'+
       '<span class="pill pill-'+nr+'">'+S("riskNames")[nr]+'</span></div>';
   }
   $("nights").innerHTML = nightsHtml;
@@ -560,14 +1158,18 @@ function render(){
   adv += '<div class="danger"><h3>'+S("dangerT")+'</h3><p>'+S("dangerB")+'</p></div>';
   adv += '<p class="disclaimer">'+S("disclaimerShort")+'</p>';
   $("advice").innerHTML = adv;
-  $("placeLine").textContent = S("placeNow").replace("{p}", place.name + (place.admin ? ", "+place.admin : ""));
+  if (mode==="replay"){
+    $("placeLine").textContent = S("placeReplay").replace("{p}", place.name + (place.admin ? ", "+place.admin : "")).replace("{d}", dateLabel(tDate));
+  } else {
+    $("placeLine").textContent = S("placeNow").replace("{p}", place.name + (place.admin ? ", "+place.admin : ""));
+  }
 }
 
 /* ============ Data loading ============ */
 function showLoading(){
   var b = $("statusBox");
   b.className = "status loading"; b.style.display = "block";
-  b.innerHTML = "<span>"+S("loading")+"</span>";
+  b.innerHTML = "<span>"+(mode==="replay" ? S("loadingReplay") : S("loading"))+"</span>";
 }
 function showError(){
   var b = $("statusBox");
@@ -579,8 +1181,15 @@ function hideStatus(){ var b=$("statusBox"); b.style.display="none"; b.className
 
 function loadForecast(){
   showLoading();
-  var url = "https://api.open-meteo.com/v1/forecast?latitude="+place.lat+"&longitude="+place.lon+
-            "&hourly=temperature_2m,relative_humidity_2m,apparent_temperature&forecast_days=7&timezone=auto";
+  var url;
+  if (mode === "replay"){
+    url = "https://archive-api.open-meteo.com/v1/archive?latitude="+place.lat+"&longitude="+place.lon+
+          "&start_date="+replayDate+"&end_date="+addDays(replayDate, 3)+
+          "&hourly=temperature_2m,relative_humidity_2m,apparent_temperature&timezone=auto";
+  } else {
+    url = "https://api.open-meteo.com/v1/forecast?latitude="+place.lat+"&longitude="+place.lon+
+          "&hourly=temperature_2m,relative_humidity_2m,apparent_temperature&forecast_days=7&timezone=auto";
+  }
   fetch(url).then(function(r){
     if (!r.ok) throw new Error("HTTP "+r.status);
     return r.json();
@@ -632,6 +1241,95 @@ function doSearch(){
   });
 }
 
+/* ============ Mode / replay (v2) ============ */
+function setMode(m, load){
+  mode = m;
+  $("modeLive").classList.toggle("on", m==="live");
+  $("modeReplay").classList.toggle("on", m==="replay");
+  $("replayBox").classList.toggle("hidden", m!=="replay");
+  if (load !== false) loadForecast();
+}
+function buildReplayPresets(){
+  var box = $("replayPresets"); if (!box) return;
+  box.innerHTML = "";
+  REPLAY_PRESETS.forEach(function(p){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip" + ((mode==="replay" && replayDate===p.date && place.lat===p.lat) ? " on" : "");
+    b.textContent = p.name + " · " + dateLabel(p.date);
+    b.addEventListener("click", function(){
+      place = {name:p.name, admin:p.admin, lat:p.lat, lon:p.lon};
+      replayDate = p.date;
+      $("replayDate").value = replayDate;
+      buildChips();
+      setMode("replay", false);
+      buildReplayPresets();
+      loadForecast();
+    });
+    box.appendChild(b);
+  });
+}
+
+/* ============ Geolocation (v2) ============ */
+function showGeoFail(){
+  var b = $("statusBox");
+  b.className = "status error"; b.style.display = "block";
+  b.textContent = S("geoFail");
+}
+function useMyLocation(){
+  if (!navigator.geolocation){ showGeoFail(); return; }
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat = pos.coords.latitude, lon = pos.coords.longitude;
+    place = {name: lat.toFixed(2)+", "+lon.toFixed(2), admin:"", lat:lat, lon:lon};
+    buildChips();
+    $("searchResults").style.display = "none";
+    loadForecast();
+    fetch("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude="+lat+"&longitude="+lon+"&localityLanguage=en")
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var nm = d.city || d.locality || "";
+        if (nm){
+          place = {name:nm, admin:(d.principalSubdivision || d.countryName || ""), lat:lat, lon:lon};
+          if (wx) render();
+        }
+      }).catch(function(){});
+  }, function(){ showGeoFail(); }, {timeout:10000});
+}
+
+/* ============ Share tonight's plan (v2) ============ */
+function buildShareText(){
+  if (!lastView) return "";
+  var st = lastView.st;
+  var lines = [];
+  lines.push("NightMaa — "+place.name+(place.admin ? ", "+place.admin : "")+" · "+dateLabel(lastView.tDate));
+  lines.push(S("shareMin")+": "+fmtT(st.minIn)+" · "+S("shareRisk")+": "+S("riskNames")[lastView.risk]+" · "+st.above+" "+S("shareHrs"));
+  lines.push(S("shareActsT"));
+  S("shareActs").forEach(function(a, i){ lines.push((i+1)+". "+a); });
+  lines.push(S("shareDisc"));
+  return lines.join("\n");
+}
+function fallbackCopy(txt){
+  var ta = document.createElement("textarea");
+  ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); } catch(e){}
+  document.body.removeChild(ta);
+}
+
+/* ============ Validation shortcut (v2) ============ */
+function jumpToValidationNight(){
+  place = {name:"Chennai", admin:"Tamil Nadu", lat:13.0827, lon:80.2707};
+  replayDate = "2026-05-20";
+  $("replayDate").value = replayDate;
+  $("selRoof").value = "tin";
+  $("selVent").value = "poor";
+  buildChips();
+  setMode("replay", false);
+  buildReplayPresets();
+  loadForecast();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
 /* ============ Language ============ */
 function applyLang(){
   document.querySelectorAll("[data-i18n]").forEach(function(el){
@@ -642,10 +1340,15 @@ function applyLang(){
     var k = el.getAttribute("data-i18n-ph");
     if (STR[lang][k]) el.setAttribute("placeholder", STR[lang][k]);
   });
-  document.documentElement.lang = (lang==="hi" ? "hi" : "en");
-  $("langEn").classList.toggle("on", lang==="en");
-  $("langHi").classList.toggle("on", lang==="hi");
+  document.documentElement.lang = lang;
+  var rtl = (lang==="ur" || lang==="ar");
+  document.documentElement.dir = rtl ? "rtl" : "ltr";
+  $("appWrap").setAttribute("dir", rtl ? "rtl" : "ltr");
+  $("langSel").value = lang;
+  document.querySelector('[data-i18n="stHoursK"]').textContent = S("stHoursK").replace("{thr}", fmtT(32));
+  document.querySelector('[data-i18n="lgThr"]').textContent = S("lgThr").replace("{thr}", fmtT(32));
   buildSelects();
+  buildReplayPresets();
   if (wx) render();
 }
 
@@ -657,8 +1360,37 @@ $("searchInput").addEventListener("keydown", function(e){ if (e.key === "Enter")
 ["selRoof","selFloor","selVent","selCool"].forEach(function(id){
   $(id).addEventListener("change", function(){ if (wx) render(); });
 });
-$("langEn").addEventListener("click", function(){ lang="en"; applyLang(); });
-$("langHi").addEventListener("click", function(){ lang="hi"; applyLang(); });
+$("langSel").addEventListener("change", function(){ lang = this.value; applyLang(); });
+$("unitBtn").addEventListener("click", function(){
+  unit = (unit==="C" ? "F" : "C");
+  this.textContent = (unit==="C" ? "°C" : "°F");
+  if (wx) render();
+});
+$("geoBtn").addEventListener("click", useMyLocation);
+$("modeLive").addEventListener("click", function(){ setMode("live"); });
+$("modeReplay").addEventListener("click", function(){ setMode("replay"); });
+$("replayDate").addEventListener("change", function(){
+  if (!this.value) return;
+  replayDate = this.value;
+  if (mode !== "replay") setMode("replay", false);
+  buildReplayPresets();
+  loadForecast();
+});
+$("shareCopy").addEventListener("click", function(){
+  var txt = buildShareText(); if (!txt) return;
+  function done(){ var m=$("shareMsg"); m.textContent = S("shareCopied"); m.classList.remove("hidden"); }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(function(){ fallbackCopy(txt); done(); });
+  } else { fallbackCopy(txt); done(); }
+});
+$("shareWa").addEventListener("click", function(){
+  var txt = buildShareText(); if (!txt) return;
+  window.open("https://wa.me/?text="+encodeURIComponent(txt), "_blank");
+});
+$("valReplayBtn").addEventListener("click", jumpToValidationNight);
+$("replayDate").value = replayDate;
+$("replayDate").max = new Date(Date.now() - 6*86400000).toISOString().slice(0,10);
+buildReplayPresets();
 loadForecast();
 </script>
 </body>
