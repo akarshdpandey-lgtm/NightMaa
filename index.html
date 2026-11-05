@@ -948,6 +948,19 @@ function $(id){ return document.getElementById(id); }
 function S(k){ return STR[lang][k]; }
 function pad(n){ return (n<10?"0":"")+n; }
 function fmtT(v){ var x = (unit==="F") ? (v*9/5+32) : v; return (Math.round(x*10)/10).toFixed(1)+(unit==="F" ? "°F" : "°C"); }
+function unitizeVal(str){
+  if (unit!=="F" || !str) return str;
+  return str.replace(/(\d+(?:[.,]\d+)?)\s*°\s*[Cم]/g, function(m, num){
+    return fmtT(parseFloat(num.replace(",", ".")));
+  });
+}
+var VAL_KEYS = ["valR1s","valR1n","valR2s","valR2n","valR3k","valR3s","valR3n","valNote"];
+function renderValidation(){
+  VAL_KEYS.forEach(function(k){
+    var el = document.querySelector('[data-i18n="'+k+'"]');
+    if (el && STR[lang] && STR[lang][k]) el.textContent = unitizeVal(STR[lang][k]);
+  });
+}
 function fmtAxis(v){ return (unit==="F" ? Math.round(v*9/5+32) : v)+"°"; }
 function hourLabel(h){ var hh=h%12; if(hh===0) hh=12; return hh+(h<12||h===24?" AM":" PM"); }
 function hourLabelShort(h){ var hh=h%12; if(hh===0) hh=12; return hh+(h<12?"a":"p"); }
@@ -981,10 +994,16 @@ function weekdayName(dateStr){
   var hi=["रविवार","सोमवार","मंगलवार","बुधवार","गुरुवार","शुक्रवार","शनिवार"];
   return (lang==="hi"?hi:en)[dt.getUTCDay()];
 }
+var DATE_LOCALES = {en:"en-GB", hi:"hi-IN", bn:"bn-IN", es:"es-ES", fr:"fr-FR", pt:"pt-PT", ur:"ur-PK", ar:"ar-EG"};
 function dateLabel(dateStr){
   var p = dateParts(dateStr);
-  var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return weekdayName(dateStr)+" "+p.d+" "+months[p.m-1];
+  var dt = new Date(Date.UTC(p.y, p.m-1, p.d));
+  try {
+    return new Intl.DateTimeFormat(DATE_LOCALES[lang] || "en-GB", {weekday:"long", day:"numeric", month:"long", timeZone:"UTC"}).format(dt);
+  } catch(e) {
+    var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return weekdayName(dateStr)+" "+p.d+" "+months[p.m-1];
+  }
 }
 function tonightDateStr(){
   var off = wx.utc_offset_seconds || 0;
@@ -1120,6 +1139,7 @@ function render(){
   document.querySelector('[data-i18n="planTitle"]').textContent = (mode==="replay" ? S("planTitleReplay") : S("planTitle"));
   document.querySelector('[data-i18n="stHoursK"]').textContent = S("stHoursK").replace("{thr}", fmtT(32));
   document.querySelector('[data-i18n="lgThr"]').textContent = S("lgThr").replace("{thr}", fmtT(32));
+  renderValidation();
   $("results").classList.remove("hidden");
   /* risk banner */
   var banner = $("riskBanner");
@@ -1350,6 +1370,7 @@ function applyLang(){
   buildSelects();
   buildReplayPresets();
   if (wx) render();
+  renderValidation();
 }
 
 /* ============ Init ============ */
@@ -1364,6 +1385,7 @@ $("langSel").addEventListener("change", function(){ lang = this.value; applyLang
 $("unitBtn").addEventListener("click", function(){
   unit = (unit==="C" ? "F" : "C");
   this.textContent = (unit==="C" ? "°C" : "°F");
+  renderValidation();
   if (wx) render();
 });
 $("geoBtn").addEventListener("click", useMyLocation);
