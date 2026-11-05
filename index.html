@@ -1181,7 +1181,7 @@ function render(){
   if (mode==="replay"){
     $("placeLine").textContent = S("placeReplay").replace("{p}", place.name + (place.admin ? ", "+place.admin : "")).replace("{d}", dateLabel(tDate));
   } else {
-    $("placeLine").textContent = S("placeNow").replace("{p}", place.name + (place.admin ? ", "+place.admin : ""));
+    $("placeLine").textContent = S("placeNow").replace("{p}", place.name + (place.admin ? ", "+place.admin : "")) + " · " + dateLabel(tDate);
   }
 }
 
